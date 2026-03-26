@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ShieldMap — Know Before You Work</title>
+<title>ShieldsMap — Know Before You Work</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -18,7 +18,47 @@
   --gold:#f59e0b;
 }
 html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink)}
-.app{display:flex;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh;overflow:hidden;position:relative}
+
+/* ── MOBILE NAV ── */
+.mob-nav{display:none;position:fixed;top:0;left:0;right:0;z-index:600;height:52px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:10px}
+.mob-nav .wi{width:26px;height:26px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.mob-nav .wt{font-family:'Instrument Serif',serif;font-size:18px;color:var(--ink);flex:1}
+.mob-nav .wt em{font-style:italic;color:var(--danger)}
+
+/* ── MOBILE BOTTOM BAR ── */
+.mob-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:600;background:rgba(255,255,255,.97);border-top:1px solid var(--border);padding:10px 14px 22px;box-shadow:0 -3px 16px rgba(0,0,0,.08)}
+.mob-bar-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mob-bar-text{flex:1}
+.mob-bar-text b{font-size:13px;display:block;color:var(--ink)}
+.mob-bar-text span{font-size:11px;color:var(--muted)}
+.mob-stats{display:flex;gap:12px}
+.mbs{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
+.mbs-dot{width:8px;height:8px;border-radius:50%}
+.mbs-dot.r{background:var(--danger)}
+.mbs-dot.y{background:var(--warn)}
+.mbs-dot.g{background:var(--safe)}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  .panel{display:none !important}
+  .mob-nav{display:flex !important}
+  .mob-bar{display:block !important}
+  .map-col{padding-top:52px !important;padding-bottom:100px !important}
+  .map-legend{top:62px !important}
+  .map-stats{display:none !important}
+  .detail{
+    position:fixed !important;top:auto !important;bottom:0 !important;
+    left:0 !important;right:0 !important;width:100% !important;
+    max-height:78vh !important;overflow-y:auto !important;
+    border-radius:20px 20px 0 0 !important;
+    border-left:none !important;border-top:1.5px solid var(--border) !important;
+    transform:translateY(100%) !important;
+    box-shadow:0 -6px 30px rgba(0,0,0,.12) !important;
+  }
+  .detail.open{transform:translateY(0) !important}
+  .detail-body{padding-bottom:30px}
+}
 
 /* PANEL */
 .panel{width:360px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden;box-shadow:2px 0 16px rgba(0,0,0,.04)}
@@ -190,12 +230,36 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 <body>
 <div class="app">
 
+  <!-- MOBILE NAV -->
+  <div class="mob-nav" id="mobNav">
+    <div class="wi">🛡️</div>
+    <div class="wt">Shields<em>Map</em></div>
+    <button class="btn btn-outline" style="padding:5px 12px;font-size:12px;border-radius:20px" onclick="openModal('modal-login')" id="mobSignBtn">Sign In</button>
+    <button class="btn btn-ink" style="padding:5px 12px;font-size:12px;border-radius:20px" onclick="openModal('modal-signup')">Join Free</button>
+  </div>
+
+  <!-- MOBILE BOTTOM BAR -->
+  <div class="mob-bar" id="mobBar">
+    <div class="mob-bar-top">
+      <div class="mob-bar-text">
+        <b>🛡️ ShieldsMap — Know before you work</b>
+        <span>Tap any circle to see if a home is flagged</span>
+      </div>
+    </div>
+    <div class="mob-stats">
+      <div class="mbs"><div class="mbs-dot r"></div><span id="mob-r">0</span> Danger</div>
+      <div class="mbs"><div class="mbs-dot y"></div><span id="mob-y">0</span> Caution</div>
+      <div class="mbs"><div class="mbs-dot g"></div><span id="mob-g">0</span> Safe</div>
+      <button class="btn btn-ink" style="margin-left:auto;padding:6px 14px;font-size:12px;border-radius:20px" onclick="openModal('modal-signup')">Join Free</button>
+    </div>
+  </div>
+
   <!-- PANEL -->
   <div class="panel">
     <div class="panel-head">
       <div class="wordmark">
         <div class="wicon">🛡️</div>
-        <div class="wtitle">Shield<em>Map</em></div>
+        <div class="wtitle">Shields<em>Map</em></div>
       </div>
       <div class="user-bar" id="userBar">
         <div class="user-bar-text">
@@ -282,7 +346,7 @@ html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;backgroun
 <div class="overlay" id="modal-login">
   <div class="modal">
     <div class="mey">Welcome Back</div>
-    <div class="mtitle">Sign in to ShieldMap</div>
+    <div class="mtitle">Sign in to ShieldsMap</div>
     <div class="msub">Your community is waiting.</div>
     <div class="merr" id="login-err"></div>
     <div class="fg"><label class="fl">Email</label><input class="fi" id="l-email" type="email" placeholder="you@email.com"></div>
@@ -421,19 +485,98 @@ function initMap(){
 }
 
 function refreshMarkers(){
-  Object.values(leafMarkers).forEach(function(m){leafMap.removeLayer(m)});
-  leafMarkers = {};
-  allReports.forEach(function(r){
-    var cls = r.status[0];
-    var w = document.createElement('div');
-    w.style.cssText = 'position:relative;width:30px;height:30px';
-    w.innerHTML = '<div class="mpin '+cls+(activeId===r.id?' active':'')+'">🏠</div>'
-      +(r.report_count>1?'<div class="pbadge">'+r.report_count+'</div>':'');
-    var icon = L.divIcon({html:w.outerHTML,className:'',iconSize:[30,30],iconAnchor:[15,15]});
-    var m = L.marker([parseFloat(r.lat)||25.768, parseFloat(r.lng)||-80.210],{icon}).addTo(leafMap);
-    m.on('click',function(){selectReport(r.id)});
-    leafMarkers[r.id] = m;
+  // Remove old markers and circles
+  Object.values(leafMarkers).forEach(function(m){
+    if(m.remove) m.remove();
+    else leafMap.removeLayer(m);
   });
+  leafMarkers = {};
+
+  var isPrem = currentProfile && currentProfile.tier === 'premium';
+
+  var colors = {
+    red:    {fill:'#dc2626', stroke:'#dc2626'},
+    yellow: {fill:'#d97706', stroke:'#d97706'},
+    green:  {fill:'#16a34a', stroke:'#16a34a'}
+  };
+
+  allReports.forEach(function(r){
+    var lat = parseFloat(r.lat)||25.768;
+    var lng = parseFloat(r.lng)||-80.210;
+    var col = colors[r.status] || colors.red;
+
+    if(isPrem){
+      // PREMIUM — exact pin on the house
+      var w = document.createElement('div');
+      w.style.cssText = 'position:relative;width:30px;height:30px';
+      w.innerHTML = '<div class="mpin '+ r.status[0] +(activeId===r.id?' active':'')+'">🏠</div>'
+        +(r.report_count>1?'<div class="pbadge">'+r.report_count+'</div>':'');
+      var icon = L.divIcon({html:w.outerHTML,className:'',iconSize:[30,30],iconAnchor:[15,15]});
+      var m = L.marker([lat, lng],{icon}).addTo(leafMap);
+      m.on('click',function(){selectReport(r.id)});
+      leafMarkers[r.id] = m;
+    } else {
+      // FREE — glowing transparent circle covering the area
+      // Add slight random offset so exact location is hidden
+      var offset = 0.0008;
+      var randLat = lat + (Math.random() - 0.5) * offset;
+      var randLng = lng + (Math.random() - 0.5) * offset;
+
+      // Outer glow circle (large, very transparent)
+      var outerCircle = L.circle([randLat, randLng], {
+        radius: 120,
+        color: col.stroke,
+        fillColor: col.fill,
+        fillOpacity: 0.08,
+        weight: 0,
+        interactive: false
+      }).addTo(leafMap);
+
+      // Middle circle
+      var midCircle = L.circle([randLat, randLng], {
+        radius: 70,
+        color: col.stroke,
+        fillColor: col.fill,
+        fillOpacity: 0.14,
+        weight: 0,
+        interactive: false
+      }).addTo(leafMap);
+
+      // Inner circle (more opaque)
+      var innerCircle = L.circle([randLat, randLng], {
+        radius: 35,
+        color: col.stroke,
+        fillColor: col.fill,
+        fillOpacity: 0.28,
+        weight: 1.5,
+        opacity: 0.4
+      }).addTo(leafMap);
+
+      // Small center dot
+      var dot = L.circleMarker([randLat, randLng], {
+        radius: 6,
+        color: '#fff',
+        fillColor: col.fill,
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(leafMap);
+
+      // Click any part to open detail
+      innerCircle.on('click', function(){selectReport(r.id)});
+      dot.on('click', function(){selectReport(r.id)});
+
+      // Store all layers so we can remove them later
+      leafMarkers[r.id] = {
+        remove: function(){
+          leafMap.removeLayer(outerCircle);
+          leafMap.removeLayer(midCircle);
+          leafMap.removeLayer(innerCircle);
+          leafMap.removeLayer(dot);
+        }
+      };
+    }
+  });
+
   // Update stats
   var rs = allReports.filter(function(r){return r.status==='red'}).length;
   var ys = allReports.filter(function(r){return r.status==='yellow'}).length;
@@ -445,6 +588,10 @@ function refreshMarkers(){
   document.getElementById('fc-r').textContent = rs;
   document.getElementById('fc-y').textContent = ys;
   document.getElementById('fc-g').textContent = gs;
+  // Mobile counters
+  if(document.getElementById('mob-r')) document.getElementById('mob-r').textContent = rs;
+  if(document.getElementById('mob-y')) document.getElementById('mob-y').textContent = ys;
+  if(document.getElementById('mob-g')) document.getElementById('mob-g').textContent = gs;
 }
 
 // ═══════════════════════════
@@ -658,7 +805,7 @@ async function handleSignup(){
     await supa.from('profiles').upsert({id:data.user.id, full_name:fname+' '+lname, trade, tier:'free'});
   }
   closeModal('modal-signup');
-  showToast('✅ Welcome to ShieldMap! Check your email to verify.');
+  showToast('✅ Welcome to ShieldsMap! Check your email to verify.');
 }
 
 async function handleLogin(){
