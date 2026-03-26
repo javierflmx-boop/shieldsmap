@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ShieldsMap — Know Before You Work</title>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -17,972 +15,623 @@
   --safe-bg:#f0fdf4;--warn-bg:#fffbeb;--danger-bg:#fef2f2;
   --gold:#f59e0b;
 }
-html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink)}
-.app{display:flex;height:100vh;overflow:hidden;position:relative}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);overflow:hidden}
 
-/* ── MOBILE NAV ── */
-.mob-nav{display:none;position:fixed;top:0;left:0;right:0;z-index:600;height:52px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:10px}
-.mob-nav .wi{width:26px;height:26px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px}
-.mob-nav .wt{font-family:'Instrument Serif',serif;font-size:18px;color:var(--ink);flex:1}
-.mob-nav .wt em{font-style:italic;color:var(--danger)}
-
-/* ── MOBILE BOTTOM BAR ── */
-.mob-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:600;background:rgba(255,255,255,.97);border-top:1px solid var(--border);padding:10px 14px 22px;box-shadow:0 -3px 16px rgba(0,0,0,.08)}
-.mob-bar-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.mob-bar-text{flex:1}
-.mob-bar-text b{font-size:13px;display:block;color:var(--ink)}
-.mob-bar-text span{font-size:11px;color:var(--muted)}
-.mob-stats{display:flex;gap:12px}
-.mbs{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
-.mbs-dot{width:8px;height:8px;border-radius:50%}
-.mbs-dot.r{background:var(--danger)}
-.mbs-dot.y{background:var(--warn)}
-.mbs-dot.g{background:var(--safe)}
-
-/* ── MOBILE RESPONSIVE ── */
-@media(max-width:768px){
-  .panel{display:none !important}
-  .mob-nav{display:flex !important}
-  .mob-bar{display:block !important}
-  .map-col{padding-top:52px !important;padding-bottom:100px !important}
-  .map-legend{top:62px !important}
-  .map-stats{display:none !important}
-  .detail{
-    position:fixed !important;top:auto !important;bottom:0 !important;
-    left:0 !important;right:0 !important;width:100% !important;
-    max-height:78vh !important;overflow-y:auto !important;
-    border-radius:20px 20px 0 0 !important;
-    border-left:none !important;border-top:1.5px solid var(--border) !important;
-    transform:translateY(100%) !important;
-    box-shadow:0 -6px 30px rgba(0,0,0,.12) !important;
-  }
-  .detail.open{transform:translateY(0) !important}
-  .detail-body{padding-bottom:30px}
-}
-
-/* PANEL */
-.panel{width:360px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden;box-shadow:2px 0 16px rgba(0,0,0,.04)}
-.panel-head{padding:18px 18px 0;flex-shrink:0}
-.wordmark{display:flex;align-items:center;gap:8px;margin-bottom:16px}
-.wicon{width:28px;height:28px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
-.wtitle{font-family:'Instrument Serif',serif;font-size:20px;color:var(--ink)}
-.wtitle em{font-style:italic;color:var(--danger)}
-
-/* USER BAR */
-.user-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px}
-.user-bar-text{flex:1;min-width:0}
-.user-bar-name{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-bar-tier{font-size:10px;color:var(--muted)}
-.tier-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
-.tier-dot.free{background:var(--muted2)}
-.tier-dot.premium{background:var(--gold)}
-
-/* SEARCH */
-.search-row{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:0;background:var(--bg)}
-.search-row input{flex:1;border:none;background:transparent;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none}
-.search-row input::placeholder{color:var(--muted2)}
-.search-btn{padding:9px 14px;background:var(--ink);color:#fff;border:none;cursor:pointer;font-size:12px}
-
-/* FILTER TABS */
-.ftabs{display:flex;border-bottom:1px solid var(--border);margin-top:0}
-.ftab{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--muted2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
-.ftab.active{color:var(--ink);border-bottom-color:var(--ink)}
-.fc{display:inline-block;width:16px;height:16px;border-radius:4px;font-size:9px;line-height:16px;text-align:center;margin-left:4px;font-weight:800}
-.fc.r{background:var(--danger-bg);color:var(--danger)}
-.fc.y{background:var(--warn-bg);color:var(--warn)}
-.fc.g{background:var(--safe-bg);color:var(--safe)}
-
-/* REPORT LIST */
-.report-list{flex:1;overflow-y:auto;padding:10px}
-.report-list::-webkit-scrollbar{width:3px}
-.report-list::-webkit-scrollbar-thumb{background:var(--border)}
-.rrow{display:flex;gap:0;cursor:pointer;border-radius:10px;padding:11px;margin-bottom:4px;border:1.5px solid transparent;transition:all .15s;position:relative}
-.rrow:hover{background:var(--bg);border-color:var(--border)}
-.rrow.active{background:var(--bg);border-color:var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06)}
-.rbar{width:3px;border-radius:2px;flex-shrink:0;margin-right:11px;align-self:stretch;min-height:36px}
-.rbar.r{background:var(--danger)}
-.rbar.y{background:var(--warn)}
-.rbar.g{background:var(--safe)}
-.rbody{flex:1;min-width:0}
-.rtop{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:3px}
-.raddr{font-family:'Instrument Serif',serif;font-size:15px;color:var(--ink);flex:1;line-height:1.2}
-.raddr.blur{filter:blur(5px);user-select:none}
-.rbadge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
-.rbadge.r{background:var(--danger-bg);color:var(--danger)}
-.rbadge.y{background:var(--warn-bg);color:var(--warn)}
-.rbadge.g{background:var(--safe-bg);color:var(--safe)}
-.rpreview{font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rpreview.blur{filter:blur(4px);user-select:none}
-.rmeta{display:flex;gap:8px;flex-wrap:wrap}
-.rchip{font-size:10px;color:var(--muted2);display:flex;align-items:center;gap:3px}
-.rchip.loss{color:var(--danger)}
-.rlock{font-size:10px;color:var(--muted2);margin-top:4px;display:flex;align-items:center;gap:4px}
-
-/* PANEL FOOTER */
-.panel-foot{border-top:1px solid var(--border);padding:12px;flex-shrink:0}
-.foot-btn{width:100%;padding:11px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;transition:opacity .15s}
-.foot-btn:hover{opacity:.88}
-.foot-btn.dark{background:var(--ink);color:#fff}
-.foot-btn.gold{background:var(--gold);color:#1a0800}
-.foot-btn.outline{background:transparent;border:1.5px solid var(--border);color:var(--ink)}
-.foot-btn span{flex:1;text-align:left}
-.foot-btn .arrow{margin-left:auto}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:54px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.nav-logo{display:flex;align-items:center;gap:8px;flex:1}
+.nav-icon{width:28px;height:28px;background:var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.nav-title{font-family:'Instrument Serif',serif;font-size:18px;color:var(--ink)}
+.nav-title em{font-style:italic;color:var(--danger)}
+.nav-right{display:flex;gap:8px}
 
 /* MAP */
-.map-col{flex:1;position:relative;overflow:hidden}
-#main-map{width:100%;height:100%}
-.map-legend{position:absolute;top:14px;left:14px;z-index:400;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:10px;padding:10px 13px;box-shadow:0 2px 10px rgba(0,0,0,.07);display:flex;flex-direction:column;gap:6px}
-.mleg{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600}
-.mdot{width:9px;height:9px;border-radius:50%}
-.mdot.r{background:var(--danger)}
-.mdot.y{background:var(--warn)}
-.mdot.g{background:var(--safe)}
-.map-stats{position:absolute;bottom:14px;right:14px;z-index:400;background:rgba(255,255,255,.96);border:1px solid var(--border);border-radius:10px;padding:10px 16px;display:flex;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
-.ms{text-align:center}
-.ms-n{font-family:'Instrument Serif',serif;font-size:20px;line-height:1}
-.ms-n.r{color:var(--danger)}
-.ms-n.y{color:var(--warn)}
-.ms-n.g{color:var(--safe)}
-.ms-l{font-size:9px;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+#map{position:fixed;top:54px;left:0;right:0;bottom:72px;z-index:1}
 
-/* DETAIL PANEL */
-.detail{position:absolute;top:0;right:0;bottom:0;width:290px;background:var(--white);border-left:1px solid var(--border);z-index:500;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-3px 0 16px rgba(0,0,0,.08)}
-.detail.open{transform:translateX(0)}
-.detail-head{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;position:relative}
-.detail-close{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
-.dstatus{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
-.dstatus.r{color:var(--danger)}
-.dstatus.y{color:var(--warn)}
-.dstatus.g{color:var(--safe)}
-.daddr{font-family:'Instrument Serif',serif;font-size:18px;line-height:1.2;margin-bottom:3px}
-.downer{font-size:11px;color:var(--muted);margin-bottom:10px}
-.dchips{display:flex;gap:6px;flex-wrap:wrap}
-.dchip{font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:2px 8px;color:var(--muted);font-weight:600}
-.dchip.loss{background:var(--danger-bg);color:var(--danger);border-color:#fca5a5}
-.detail-body{flex:1;overflow-y:auto;padding:14px 16px}
-.detail-body::-webkit-scrollbar{width:2px}
-.detail-body::-webkit-scrollbar-thumb{background:var(--border)}
-.dsec{margin-bottom:16px}
-.dsec-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted2);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
-.dtext{font-size:12px;color:var(--muted);line-height:1.6}
-.dtext.blur{filter:blur(5px);user-select:none}
-.lock-box{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:14px;text-align:center;margin-top:8px}
-.lock-box p{font-size:12px;color:var(--muted);line-height:1.5;margin:6px 0 12px}
+/* LEGEND */
+.legend{position:fixed;top:66px;left:12px;z-index:500;background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:10px;padding:10px 13px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.leg-row{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;padding:2px 0}
+.ldot{width:9px;height:9px;border-radius:50%}
+.ldot.r{background:var(--danger)}
+.ldot.y{background:var(--warn)}
+.ldot.g{background:var(--safe)}
 
-/* MAP PIN */
-.mpin{width:30px;height:30px;border-radius:50%;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:transform .15s;position:relative}
-.mpin:hover{transform:scale(1.15)}
-.mpin.r{background:var(--danger)}
-.mpin.y{background:var(--warn)}
-.mpin.g{background:var(--safe)}
-.mpin.active{border-color:var(--ink);box-shadow:0 0 0 3px rgba(14,14,14,.12),0 2px 8px rgba(0,0,0,.22)}
-.pbadge{position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;border-radius:8px;background:var(--ink);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;padding:0 2px}
+/* BOTTOM BAR */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:1000;height:72px;background:rgba(255,255,255,.97);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.bottom-stats{display:flex;gap:12px;flex:1}
+.bstat{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
+.bstat-dot{width:8px;height:8px;border-radius:50%}
+.bstat-dot.r{background:var(--danger)}
+.bstat-dot.y{background:var(--warn)}
+.bstat-dot.g{background:var(--safe)}
 
-/* MODALS */
-.overlay{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
-.overlay.open{display:flex}
-.modal{background:var(--white);border-radius:16px;padding:30px;width:420px;max-width:96vw;animation:mIn .2s ease;box-shadow:0 16px 50px rgba(0,0,0,.14)}
-@keyframes mIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.mey{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:7px}
-.mtitle{font-family:'Instrument Serif',serif;font-size:26px;color:var(--ink);margin-bottom:4px;line-height:1.15}
-.msub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5}
-.fg{margin-bottom:11px}
-.fl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
-.fi{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s;background:#fff}
-.fi:focus{border-color:var(--ink)}
-.frow{display:flex;gap:10px}
-.frow .fg{flex:1}
-.mactions{display:flex;gap:9px;margin-top:14px}
-.mactions .btn{flex:1}
-.mswitch{text-align:center;font-size:12px;color:var(--muted);margin-top:12px}
-.mswitch a{color:var(--ink);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-.merr{background:var(--danger-bg);border:1px solid #fca5a5;border-radius:7px;padding:9px 12px;font-size:12px;color:var(--danger);margin-bottom:12px;display:none}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:8px;padding:9px 16px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ink:active{opacity:.8}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink)}
+.btn-outline:active{background:var(--bg)}
+.btn-gold{background:var(--gold);color:#1a0800}
+.btn-safe{background:var(--safe);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-block{width:100%}
+.btn-sm{padding:7px 13px;font-size:12px}
+
+/* SHEET */
+.sheet-bg{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.3);display:none;backdrop-filter:blur(4px)}
+.sheet-bg.open{display:block}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:1600;background:#fff;border-radius:20px 20px 0 0;border-top:1.5px solid var(--border);padding:0 20px 36px;box-shadow:0 -6px 30px rgba(0,0,0,.12);transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:85vh;overflow-y:auto}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:14px auto 18px}
+.sheet-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
+
+/* PIN SHEET */
+.pin-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:3px 10px;border-radius:20px;display:inline-flex;margin-bottom:8px}
+.pin-tag.r{background:var(--danger-bg);color:var(--danger)}
+.pin-tag.y{background:var(--warn-bg);color:var(--warn)}
+.pin-tag.g{background:var(--safe-bg);color:var(--safe)}
+.pin-addr{font-family:'Instrument Serif',serif;font-size:22px;line-height:1.2;margin-bottom:4px}
+.pin-meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.pin-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.chip{font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:3px 9px;font-weight:600;color:var(--muted)}
+.chip.loss{background:var(--danger-bg);border-color:#fca5a5;color:var(--danger)}
+.pin-comment{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;background:var(--bg);border-radius:10px;padding:12px}
+.pin-actions{display:flex;flex-direction:column;gap:8px}
+
+/* AUTH SHEET */
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:12px 13px;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--ink);outline:none;transition:border-color .15s;-webkit-appearance:none;background:#fff}
+.form-input:focus{border-color:var(--ink)}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.form-error{background:var(--danger-bg);border:1px solid #fca5a5;border-radius:7px;padding:9px 12px;font-size:12px;color:var(--danger);margin-bottom:12px;display:none}
+.form-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.form-switch{text-align:center;font-size:13px;color:var(--muted);margin-top:10px}
+.form-switch a{color:var(--ink);font-weight:700;cursor:pointer}
 
 /* REPORT FORM */
-.status-pick{display:flex;gap:8px;margin-bottom:0}
-.sp{flex:1;border:2px solid var(--border);border-radius:8px;padding:9px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all .15s}
+.status-pick{display:flex;gap:8px}
+.sp{flex:1;border:2px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;transition:all .15s;-webkit-tap-highlight-color:transparent}
 .sp.r{color:var(--danger)}.sp.r.sel{background:var(--danger-bg);border-color:var(--danger)}
 .sp.y{color:var(--warn)}.sp.y.sel{background:var(--warn-bg);border-color:var(--warn)}
 .sp.g{color:var(--safe)}.sp.g.sel{background:var(--safe-bg);border-color:var(--safe)}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:8px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.btn-ink{background:var(--ink);color:#fff}
-.btn-ink:hover{opacity:.88}
-.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink)}
-.btn-outline:hover{border-color:var(--ink)}
-.btn-gold{background:var(--gold);color:#1a0800}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-block{width:100%}
+/* USER BAR IN NAV */
+.user-chip{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700}
+.tier-dot{width:7px;height:7px;border-radius:50%}
+.tier-dot.free{background:var(--muted2)}
+.tier-dot.premium{background:var(--gold)}
+
+/* ABOUT BUTTON */
+.about-btn{position:fixed;bottom:82px;right:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
+
+/* REPORT BTN */
+.report-btn{position:fixed;bottom:82px;left:12px;z-index:500}
+
+/* MAP PIN STYLES */
+.mpin{width:32px;height:32px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mpin.r{background:var(--danger)}
+.mpin.y{background:var(--warn)}
+.mpin.g{background:var(--safe)}
+.pbadge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--ink);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff;padding:0 2px}
 
 /* TOAST */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:#fff;border-radius:100px;padding:10px 20px;font-size:12px;font-weight:700;z-index:9999;transition:transform .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:700;z-index:9999;transition:transform .3s;pointer-events:none;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
-/* LOADING */
-.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:13px;flex-direction:column;gap:10px}
-.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.leaflet-control-zoom,.leaflet-control-attribution{display:none}
-
-/* ── PANEL MAIN TABS ── */
-.main-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.mtab{flex:1;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--muted2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
-.mtab.active{color:var(--ink);border-bottom-color:var(--ink)}
-.panel-view{display:none;flex:1;overflow-y:auto;flex-direction:column}
-.panel-view.active{display:flex}
-.panel-view::-webkit-scrollbar{width:3px}
-.panel-view::-webkit-scrollbar-thumb{background:var(--border)}
-
-/* ── CONTRACTORS ── */
-.ctrs-list{padding:10px;display:flex;flex-direction:column;gap:8px}
-.ctr-card{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px;transition:all .15s;cursor:pointer}
-.ctr-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08);border-color:var(--safe)}
-.ctr-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.ctr-avatar{width:40px;height:40px;border-radius:10px;background:var(--safe-bg);border:1.5px solid #bbf7d0;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.ctr-name{font-size:14px;font-weight:700;color:var(--ink)}
-.ctr-trade{font-size:11px;color:var(--muted);margin-top:1px}
-.ctr-verified{display:inline-flex;align-items:center;gap:4px;background:var(--safe-bg);color:var(--safe);font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:auto;flex-shrink:0}
-.ctr-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.ctr-chip{font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--muted);font-weight:600}
-.ctr-reviews{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
-.ctr-stars{color:#f59e0b;font-size:12px}
-
-/* ADD YOURSELF BOX */
-.add-ctr-box{margin:10px;background:linear-gradient(135deg,var(--ink) 0%,#1a1a2e 100%);border-radius:12px;padding:16px;color:#fff}
-.add-ctr-box h4{font-size:13px;font-weight:800;margin-bottom:4px;color:#fff}
-.add-ctr-box p{font-size:11px;color:rgba(255,255,255,.55);margin-bottom:12px;line-height:1.5}
-.add-ctr-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,.2);color:var(--gold);font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;margin-bottom:10px}
-
-/* ── ABOUT SECTION ── */
-.about-section{
-  display:none;
-  position:fixed;bottom:0;left:0;right:0;z-index:700;
-  background:#fff;border-top:1px solid var(--border);
-  max-height:85vh;overflow-y:auto;
-  border-radius:20px 20px 0 0;
-  box-shadow:0 -6px 30px rgba(0,0,0,.12);
-  transform:translateY(100%);
-  transition:transform .35s cubic-bezier(.4,0,.2,1);
-}
-.about-section.open{transform:translateY(0);display:block}
-.about-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:14px auto 0}
-.about-inner{padding:24px 28px 40px;max-width:680px;margin:0 auto}
-.about-eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:8px}
-.about-title{font-family:'Instrument Serif',serif;font-size:28px;font-weight:400;color:var(--ink);line-height:1.2;margin-bottom:16px}
-.about-title em{font-style:italic;color:var(--danger)}
-.about-body{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:24px}
-.about-body p{margin-bottom:14px}
-.about-body p:last-child{margin-bottom:0}
-.about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.astat{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
-.astat-n{font-family:'Instrument Serif',serif;font-size:28px;font-weight:400;color:var(--ink);line-height:1}
-.astat-n.r{color:var(--danger)}
-.astat-l{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
-.about-legal{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:11px;color:var(--muted2);line-height:1.6}
-.about-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
-
-/* ABOUT TRIGGER BUTTON */
-.about-trigger{
-  position:fixed;bottom:72px;left:50%;transform:translateX(-50%);
-  z-index:500;background:rgba(255,255,255,.95);
-  border:1px solid var(--border);border-radius:100px;
-  padding:7px 16px;font-size:11px;font-weight:700;
-  color:var(--muted);cursor:pointer;
-  box-shadow:0 2px 10px rgba(0,0,0,.08);
-  display:flex;align-items:center;gap:6px;
-  backdrop-filter:blur(8px);
-  transition:all .2s;white-space:nowrap;
-  font-family:'DM Sans',sans-serif;
-}
-.about-trigger:hover{color:var(--ink);border-color:var(--ink)}
-@media(min-width:769px){
-  .about-trigger{bottom:20px;left:50%}
-  .about-section{max-width:700px;left:50%;transform:translateX(-50%) translateY(100%)}
-  .about-section.open{transform:translateX(-50%) translateY(0)}
-}
+.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- MOBILE NAV -->
-  <div class="mob-nav" id="mobNav">
-    <div class="wi">🛡️</div>
-    <div class="wt">Shields<em>Map</em></div>
-    <button class="btn btn-outline" style="padding:5px 12px;font-size:12px;border-radius:20px" onclick="openModal('modal-login')" id="mobSignBtn">Sign In</button>
-    <button class="btn btn-ink" style="padding:5px 12px;font-size:12px;border-radius:20px" onclick="openModal('modal-signup')">Join Free</button>
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-icon">🛡️</div>
+    <div class="nav-title">Shields<em>Map</em></div>
   </div>
-
-  <!-- MOBILE BOTTOM BAR -->
-  <div class="mob-bar" id="mobBar">
-    <div class="mob-bar-top">
-      <div class="mob-bar-text">
-        <b>🛡️ ShieldsMap — Know before you work</b>
-        <span>Tap any circle to see if a home is flagged</span>
-      </div>
-    </div>
-    <div class="mob-stats">
-      <div class="mbs"><div class="mbs-dot r"></div><span id="mob-r">0</span> Danger</div>
-      <div class="mbs"><div class="mbs-dot y"></div><span id="mob-y">0</span> Caution</div>
-      <div class="mbs"><div class="mbs-dot g"></div><span id="mob-g">0</span> Safe</div>
-      <button class="btn btn-ink" style="margin-left:auto;padding:6px 14px;font-size:12px;border-radius:20px" onclick="openModal('modal-signup')">Join Free</button>
-    </div>
+  <div class="nav-right" id="navRight">
+    <button class="btn btn-outline btn-sm" onclick="openSheet('sheet-login')">Sign In</button>
+    <button class="btn btn-ink btn-sm" onclick="openSheet('sheet-signup')">Join Free</button>
   </div>
+</nav>
 
-  <!-- PANEL -->
-  <div class="panel">
-    <div class="panel-head">
-      <div class="wordmark">
-        <div class="wicon">🛡️</div>
-        <div class="wtitle">Shields<em>Map</em></div>
-      </div>
-      <div class="user-bar" id="userBar">
-        <div class="user-bar-text">
-          <div class="user-bar-name">Not signed in</div>
-          <div class="user-bar-tier">Sign up free to search any address</div>
-        </div>
-        <button class="btn btn-ink" style="padding:6px 14px;font-size:12px" onclick="openModal('modal-signup')">Join Free</button>
-      </div>
-      <div class="search-row">
-        <input type="text" id="searchInput" placeholder="Search address, city…" oninput="doSearch()">
-        <button class="search-btn" onclick="doSearch()">→</button>
-      </div>
-      <!-- MAIN TABS -->
-      <div class="main-tabs">
-        <div class="mtab active" onclick="switchMainTab('map',this)">🗺️ Map</div>
-        <div class="mtab" onclick="switchMainTab('contractors',this)">👷 Contractors</div>
-      </div>
-    </div>
+<!-- MAP -->
+<div id="map"></div>
 
-    <!-- MAP VIEW -->
-    <div class="panel-view active" id="view-map">
-      <div style="padding:8px 18px 0;flex-shrink:0">
-        <div class="ftabs">
-          <div class="ftab active" onclick="filterBy('all',this)">All <span class="fc" style="background:var(--bg);color:var(--muted2)" id="fc-all">0</span></div>
-          <div class="ftab" onclick="filterBy('red',this)">Danger <span class="fc r" id="fc-r">0</span></div>
-          <div class="ftab" onclick="filterBy('yellow',this)">Caution <span class="fc y" id="fc-y">0</span></div>
-          <div class="ftab" onclick="filterBy('green',this)">Safe <span class="fc g" id="fc-g">0</span></div>
-        </div>
-      </div>
-      <div class="report-list" id="reportList">
-        <div class="loading"><div class="spinner"></div>Loading reports…</div>
-      </div>
-    </div>
+<!-- LEGEND -->
+<div class="legend">
+  <div class="leg-row"><div class="ldot r"></div>Danger</div>
+  <div class="leg-row"><div class="ldot y"></div>Caution</div>
+  <div class="leg-row"><div class="ldot g"></div>Safe</div>
+</div>
 
-    <!-- CONTRACTORS VIEW -->
-    <div class="panel-view" id="view-contractors">
-      <div class="ctrs-list" id="ctrsList"></div>
-    </div>
+<!-- REPORT BUTTON -->
+<div class="report-btn">
+  <button class="btn btn-ink btn-sm" onclick="checkAndReport()">📍 Report</button>
+</div>
 
-    <div class="panel-foot" id="panelFoot">
-      <button class="foot-btn outline" onclick="openModal('modal-signup')">
-        <span>🛡️ Create free account to see details</span>
-        <span class="arrow">→</span>
-      </button>
-    </div>
+<!-- ABOUT BUTTON -->
+<button class="about-btn" onclick="openSheet('sheet-about')">ℹ️ Why ShieldsMap?</button>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <div class="bottom-stats">
+    <div class="bstat"><div class="bstat-dot r"></div><span id="bs-r">0</span></div>
+    <div class="bstat"><div class="bstat-dot y"></div><span id="bs-y">0</span></div>
+    <div class="bstat"><div class="bstat-dot g"></div><span id="bs-g">0</span></div>
   </div>
-
-  <!-- MAP -->
-  <div class="map-col">
-    <div id="main-map"></div>
-    <div class="map-legend">
-      <div class="mleg"><div class="mdot r"></div>Danger</div>
-      <div class="mleg"><div class="mdot y"></div>Caution</div>
-      <div class="mleg"><div class="mdot g"></div>Safe</div>
-    </div>
-    <div class="map-stats">
-      <div class="ms"><div class="ms-n r" id="ms-r">0</div><div class="ms-l">Danger</div></div>
-      <div class="ms"><div class="ms-n y" id="ms-y">0</div><div class="ms-l">Caution</div></div>
-      <div class="ms"><div class="ms-n g" id="ms-g">0</div><div class="ms-l">Safe</div></div>
-    </div>
-    <div class="detail" id="detailPanel">
-      <div class="detail-head" id="detailHead">
-        <button class="detail-close" onclick="closeDetail()">✕</button>
-      </div>
-      <div class="detail-body" id="detailBody"></div>
-    </div>
+  <div id="bottomAction">
+    <button class="btn btn-ink btn-sm" onclick="openSheet('sheet-signup')">🛡️ Join Free</button>
   </div>
 </div>
 
-<!-- SIGNUP -->
-<div class="overlay" id="modal-signup">
-  <div class="modal">
-    <div class="mey">Free Account</div>
-    <div class="mtitle">Create your account</div>
-    <div class="msub">Free forever. See all pins on the map and search any address.</div>
-    <div class="merr" id="signup-err"></div>
-    <div class="frow">
-      <div class="fg"><label class="fl">First Name</label><input class="fi" id="s-fname" placeholder="Carlos"></div>
-      <div class="fg"><label class="fl">Last Name</label><input class="fi" id="s-lname" placeholder="Mendez"></div>
-    </div>
-    <div class="fg"><label class="fl">Email</label><input class="fi" id="s-email" type="email" placeholder="you@email.com"></div>
-    <div class="fg"><label class="fl">Your Trade</label>
-      <select class="fi" id="s-trade">
+<!-- SHEET BG -->
+<div class="sheet-bg" id="sheet-bg" onclick="closeAllSheets()"></div>
+
+<!-- PIN DETAIL SHEET -->
+<div class="sheet" id="sheet-pin">
+  <div class="sheet-handle"></div>
+  <button class="sheet-close" onclick="closeSheet('sheet-pin')">✕</button>
+  <div id="pin-content"></div>
+</div>
+
+<!-- SIGNUP SHEET -->
+<div class="sheet" id="sheet-signup">
+  <div class="sheet-handle"></div>
+  <button class="sheet-close" onclick="closeSheet('sheet-signup')">✕</button>
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:7px">Free Account</div>
+  <div style="font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:4px">Create your account</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Free forever. Full access while we grow.</div>
+  <div class="form-error" id="signup-err"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="s-fname" placeholder="Carlos" autocomplete="given-name"></div>
+    <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="s-lname" placeholder="Mendez" autocomplete="family-name"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="s-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+  <div class="form-group"><label class="form-label">Your Trade</label>
+    <select class="form-input" id="s-trade">
+      <option value="">Select your trade…</option>
+      <option>General Contractor</option><option>Electrician</option><option>Plumber</option>
+      <option>Landscaper</option><option>HVAC</option><option>Painter</option><option>Roofer</option><option>Other</option>
+    </select>
+  </div>
+  <div class="form-group"><label class="form-label">Password (min 6 characters)</label><input class="form-input" id="s-pass" type="password" placeholder="Create a password" autocomplete="new-password"></div>
+  <div class="form-actions">
+    <button class="btn btn-ink btn-block" id="signup-btn" onclick="handleSignup()">Create Free Account →</button>
+  </div>
+  <div class="form-switch">Already have an account? <a onclick="switchSheet('sheet-signup','sheet-login')">Sign In</a></div>
+</div>
+
+<!-- LOGIN SHEET -->
+<div class="sheet" id="sheet-login">
+  <div class="sheet-handle"></div>
+  <button class="sheet-close" onclick="closeSheet('sheet-login')">✕</button>
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:7px">Welcome Back</div>
+  <div style="font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:4px">Sign in</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Your community is waiting.</div>
+  <div class="form-error" id="login-err"></div>
+  <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="l-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+  <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="l-pass" type="password" placeholder="Your password" autocomplete="current-password"></div>
+  <div class="form-actions">
+    <button class="btn btn-ink btn-block" id="login-btn" onclick="handleLogin()">Sign In →</button>
+  </div>
+  <div class="form-switch">New here? <a onclick="switchSheet('sheet-login','sheet-signup')">Create a free account</a></div>
+</div>
+
+<!-- REPORT SHEET -->
+<div class="sheet" id="sheet-report">
+  <div class="sheet-handle"></div>
+  <button class="sheet-close" onclick="closeSheet('sheet-report')">✕</button>
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:7px">New Report</div>
+  <div style="font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:4px">Report a Property</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Admin reviews every report before it goes live.</div>
+  <div class="form-error" id="report-err"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Street Address</label><input class="form-input" id="r-addr" placeholder="123 Main St"></div>
+    <div class="form-group"><label class="form-label">City, State</label><input class="form-input" id="r-city" placeholder="Miami, FL"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Owner Name (if known)</label><input class="form-input" id="r-owner" placeholder="Optional"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Your Trade</label>
+      <select class="form-input" id="r-trade">
         <option value="">Select…</option>
         <option>General Contractor</option><option>Electrician</option><option>Plumber</option>
         <option>Landscaper</option><option>HVAC</option><option>Painter</option><option>Roofer</option><option>Other</option>
       </select>
     </div>
-    <div class="fg"><label class="fl">Password</label><input class="fi" id="s-pass" type="password" placeholder="Create a password (min 6 chars)"></div>
-    <div class="mactions">
-      <button class="btn btn-outline" onclick="closeModal('modal-signup')">Cancel</button>
-      <button class="btn btn-ink" onclick="handleSignup()">Create Account →</button>
+    <div class="form-group"><label class="form-label">Amount Lost ($)</label><input class="form-input" id="r-loss" type="number" placeholder="0"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Status</label>
+    <div class="status-pick">
+      <div class="sp r" onclick="pickSt('red',this)">🚨 Danger</div>
+      <div class="sp y" onclick="pickSt('yellow',this)">⚠️ Caution</div>
+      <div class="sp g" onclick="pickSt('green',this)">✅ Safe</div>
     </div>
-    <div class="mswitch">Already have an account? <a onclick="switchModal('modal-signup','modal-login')">Sign In</a></div>
+  </div>
+  <div class="form-group" style="margin-top:8px"><label class="form-label">What Happened</label>
+    <textarea class="form-input" id="r-comment" style="height:80px;resize:none" placeholder="Describe clearly what happened…"></textarea>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-ink btn-block" id="report-btn" onclick="handleReport()">Submit for Review →</button>
   </div>
 </div>
 
-<!-- LOGIN -->
-<div class="overlay" id="modal-login">
-  <div class="modal">
-    <div class="mey">Welcome Back</div>
-    <div class="mtitle">Sign in to ShieldsMap</div>
-    <div class="msub">Your community is waiting.</div>
-    <div class="merr" id="login-err"></div>
-    <div class="fg"><label class="fl">Email</label><input class="fi" id="l-email" type="email" placeholder="you@email.com"></div>
-    <div class="fg"><label class="fl">Password</label><input class="fi" id="l-pass" type="password" placeholder="Your password"></div>
-    <div class="mactions">
-      <button class="btn btn-outline" onclick="closeModal('modal-login')">Cancel</button>
-      <button class="btn btn-ink" onclick="handleLogin()">Sign In →</button>
-    </div>
-    <div class="mswitch">New here? <a onclick="switchModal('modal-login','modal-signup')">Create a free account</a></div>
+<!-- ABOUT SHEET -->
+<div class="sheet" id="sheet-about">
+  <div class="sheet-handle"></div>
+  <button class="sheet-close" onclick="closeSheet('sheet-about')">✕</button>
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:8px">Our Mission</div>
+  <div style="font-family:'Instrument Serif',serif;font-size:26px;line-height:1.2;margin-bottom:16px">Built by a contractor.<br>For every contractor<br>left <em style="font-style:italic;color:var(--danger)">unpaid.</em></div>
+  <div style="font-size:13px;color:var(--muted);line-height:1.75">
+    <p style="margin-bottom:12px">Every day across the US, hardworking contractors complete jobs in good faith and never receive payment. They have no warning. No protection. No way to know it happened before them.</p>
+    <p style="margin-bottom:12px">ShieldsMap was created to change that. When a contractor experiences a payment dispute, they can report that property. The report is reviewed by our admin team before it goes live — ensuring accuracy and fairness.</p>
+    <p style="margin-bottom:20px">No contractor should lose their savings, their business, or their health because one client refused to honor an agreement.</p>
   </div>
-</div>
-
-<!-- REPORT FORM -->
-<div class="overlay" id="modal-report">
-  <div class="modal">
-    <div class="mey">New Report</div>
-    <div class="mtitle">Report a Property</div>
-    <div class="msub">Admin reviews every report before it goes live.</div>
-    <div class="merr" id="report-err"></div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Street Address</label><input class="fi" id="r-addr" placeholder="123 Main St"></div>
-      <div class="fg"><label class="fl">City, State</label><input class="fi" id="r-city" placeholder="Miami, FL"></div>
-    </div>
-    <div class="fg"><label class="fl">Owner Name (if known)</label><input class="fi" id="r-owner" placeholder="John Smith"></div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Your Trade</label>
-        <select class="fi" id="r-trade">
-          <option value="">Select…</option>
-          <option>General Contractor</option><option>Electrician</option><option>Plumber</option>
-          <option>Landscaper</option><option>HVAC</option><option>Painter</option><option>Roofer</option><option>Other</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">Amount Lost ($)</label><input class="fi" id="r-loss" type="number" placeholder="0"></div>
-    </div>
-    <div class="fg"><label class="fl">Status</label>
-      <div class="status-pick">
-        <div class="sp r" onclick="pickStatus('red',this)">🚨 Danger</div>
-        <div class="sp y" onclick="pickStatus('yellow',this)">⚠️ Caution</div>
-        <div class="sp g" onclick="pickStatus('green',this)">✅ Safe</div>
-      </div>
-    </div>
-    <div class="fg" style="margin-top:10px"><label class="fl">What Happened</label><textarea class="fi" id="r-comment" style="height:80px;resize:none" placeholder="Describe what happened clearly…"></textarea></div>
-    <div class="mactions">
-      <button class="btn btn-outline" onclick="closeModal('modal-report')">Cancel</button>
-      <button class="btn btn-ink" onclick="handleReport()">Submit for Review →</button>
-    </div>
-  </div>
-</div>
-
-<!-- UPGRADE -->
-<div class="overlay" id="modal-upgrade">
-  <div class="modal">
-    <div class="mey">⭐ Premium</div>
-    <div class="mtitle">Coming Soon.</div>
-    <div class="msub">ShieldsMap Premium is currently in early access. While we grow the community — everything is free.</div>
-
-    <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;text-align:center">
-      <div style="font-size:32px;margin-bottom:10px">🛡️</div>
-      <div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:6px">You have full access — free</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.6">We are building the community first. When Premium launches you will be the first to know — and founding members get a special price.</div>
-    </div>
-
-    <div style="background:linear-gradient(135deg,var(--ink) 0%,#1a1a2e 100%);border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:6px">⭐ Premium will include</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.9">
-        ✓ Full addresses and owner names<br>
-        ✓ Exact amount lost per property<br>
-        ✓ Evidence photos and documents<br>
-        ✓ Complete report timeline<br>
-        ✓ Submit unlimited reports<br>
-        ✓ Listed in Trusted Contractors directory
-      </div>
-    </div>
-
-    <div class="mactions">
-      <button class="btn btn-outline" onclick="closeModal('modal-upgrade')">Close</button>
-      <button class="btn btn-gold" onclick="notifyMe()">🔔 Notify Me When Live</button>
-    </div>
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px;font-size:11px;color:var(--muted2);line-height:1.6">
+    <b style="display:block;margin-bottom:4px">Legal Notice</b>
+    All reports reflect the personal experiences of verified contractor members. Every report is reviewed before publication. ShieldsMap operates under Section 230 of the Communications Decency Act.
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<!-- LOAD LEAFLET FIRST, THEN SUPABASE, THEN APP -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ═══════════════════════════
-// SUPABASE INIT
-// ═══════════════════════════
-const SUPA_URL = 'https://uysgdhjbtstuwowtkmvi.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5c2dkaGpidHN0dXdvd3RrbXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgwODQsImV4cCI6MjA4OTk2NDA4NH0.THlq-dYcnO7CzHXKRk337zbGL46MDE0hlc4FcuaUYKU';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+// ═══ SUPABASE CONFIG ═══
+var SUPA_URL = 'https://uysgdhjbtstuwowtkmvi.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5c2dkaGpidHN0dXdvd3RrbXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgwODQsImV4cCI6MjA4OTk2NDA4NH0.THlq-dYcnO7CzHXKRk337zbGL46MDE0hlc4FcuaUYKU';
+var ADMIN_EMAIL = 'javierflmx@me.com';
 
-// ═══════════════════════════
-// STATE
-// ═══════════════════════════
+// ═══ STATE ═══
 var currentUser = null;
 var currentProfile = null;
 var allReports = [];
-var activeFilter = 'all';
-var activeId = null;
-var selectedStatus = '';
 var leafMap = null;
-var leafMarkers = {};
+var mapMarkers = [];
+var selectedStatus = '';
+var supa = null;
 
-// ═══════════════════════════
-// INIT
-// ═══════════════════════════
-window.onload = async function(){
+// ═══ SAMPLE DATA ═══
+var sampleReports = [
+  {id:'s1',status:'red',address:'### NE 2nd Ave',full_address:'1123 NE 2nd Ave',city:'Miami, FL',trade:'Multiple Trades',loss_amount:500000,owner_name:'Social Media Influencer',comment:'Owes money to over 12 contractors. Losses exceed $500,000. Avoid at all costs.',report_count:12,lat:25.780,lng:-80.197},
+  {id:'s2',status:'red',address:'### Coral Way',full_address:'1842 Coral Way',city:'Miami, FL',trade:'General Contractor',loss_amount:12000,owner_name:'Robert H.',comment:'Refused payment after job completion. Became threatening.',report_count:4,lat:25.762,lng:-80.237},
+  {id:'s3',status:'red',address:'### Brickell Ave',full_address:'374 Brickell Ave',city:'Miami, FL',trade:'Electrician',loss_amount:8500,owner_name:'Unknown',comment:'Physical confrontation when contractor requested payment.',report_count:7,lat:25.768,lng:-80.192},
+  {id:'s4',status:'yellow',address:'### NW 5th St',full_address:'910 NW 5th St',city:'Miami, FL',trade:'Plumber',loss_amount:0,owner_name:'Sandra L.',comment:'Very slow to pay. Took 3 months. Paid in full eventually.',report_count:2,lat:25.774,lng:-80.218},
+  {id:'s5',status:'yellow',address:'### SW 24th Rd',full_address:'789 SW 24th Rd',city:'Miami, FL',trade:'Roofer',loss_amount:2200,owner_name:'D. Thompson',comment:'Disputed 20% of invoice. Settled after negotiation.',report_count:2,lat:25.756,lng:-80.232},
+  {id:'s6',status:'green',address:'2201 Flagler St',full_address:'2201 Flagler St',city:'Miami, FL',trade:'Landscaper',loss_amount:0,owner_name:'Mike R.',comment:'Outstanding client. Pays same day every time.',report_count:3,lat:25.771,lng:-80.210},
+  {id:'s7',status:'green',address:'505 SW 8th St',full_address:'505 SW 8th St',city:'Miami, FL',trade:'General Contractor',loss_amount:0,owner_name:'Patricia V.',comment:'Very professional. Always pays within 24 hours.',report_count:3,lat:25.765,lng:-80.207},
+  {id:'s8',status:'red',address:'### Collins Ave',full_address:'7200 Collins Ave',city:'Miami Beach, FL',trade:'Multiple',loss_amount:65000,owner_name:'T. Okafor',comment:'Eight contractors flagged this property. Major scammer.',report_count:8,lat:25.760,lng:-80.175},
+  {id:'s9',status:'green',address:'3300 Mary St',full_address:'3300 Mary St',city:'Miami, FL',trade:'HVAC',loss_amount:0,owner_name:'Chen Family',comment:'Wonderful family. Paid immediately and tipped generously.',report_count:1,lat:25.758,lng:-80.203},
+  {id:'s10',status:'yellow',address:'### SW 7th St',full_address:'2240 SW 7th St',city:'Miami, FL',trade:'Painter',loss_amount:1800,owner_name:'Anonymous',comment:'Disputes small amounts at end of every job.',report_count:3,lat:25.748,lng:-80.198},
+];
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', function() {
   initMap();
-  // Check if already logged in
-  const { data: { session } } = await supa.auth.getSession();
-  if(session){
-    currentUser = session.user;
-    await loadProfile();
-    // Make admin always premium
-    if(currentUser.email === 'javierflmx@me.com'){
-      if(!currentProfile) currentProfile = {};
-      currentProfile.tier = 'premium';
-      currentProfile.full_name = 'Javier Flores';
-      currentProfile.is_admin = true;
-    }
-  }
-  updateUserBar();
-  await loadReports();
-  // Listen for auth changes
-  supa.auth.onAuthStateChange(async function(event, session){
-    if(session){
-      currentUser = session.user;
-      await loadProfile();
-      if(currentUser.email === 'javierflmx@me.com'){
-        if(!currentProfile) currentProfile = {};
-        currentProfile.tier = 'premium';
-        currentProfile.full_name = 'Javier Flores';
-        currentProfile.is_admin = true;
-      }
-    } else {
-      currentUser = null;
-      currentProfile = null;
-    }
-    updateUserBar();
-    renderList(getFiltered());
-  });
-};
+  loadSupabase();
+});
 
-// ═══════════════════════════
-// MAP
-// ═══════════════════════════
-function initMap(){
-  leafMap = L.map('main-map',{
-    zoomControl:false,scrollWheelZoom:true,dragging:true,
-    touchZoom:true,doubleClickZoom:false,minZoom:9,maxZoom:18
-  }).setView([25.768,-80.210],12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafMap);
+// ═══ LOAD SUPABASE ASYNC ═══
+function loadSupabase() {
+  var script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+  script.onload = function() {
+    try {
+      supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+      checkSession();
+      loadReports();
+    } catch(e) {
+      console.log('Supabase init error:', e);
+      useSampleData();
+    }
+  };
+  script.onerror = function() {
+    console.log('Supabase failed to load, using sample data');
+    useSampleData();
+  };
+  document.head.appendChild(script);
 }
 
-function refreshMarkers(){
-  // Remove old markers and circles
-  Object.values(leafMarkers).forEach(function(m){
-    if(m.remove) m.remove();
-    else leafMap.removeLayer(m);
-  });
-  leafMarkers = {};
+function useSampleData() {
+  allReports = sampleReports;
+  renderMap();
+  updateStats();
+}
 
-  var isPrem = currentProfile && currentProfile.tier === 'premium';
+// ═══ SESSION ═══
+async function checkSession() {
+  if(!supa) return;
+  try {
+    var result = await supa.auth.getSession();
+    if(result.data && result.data.session) {
+      currentUser = result.data.session.user;
+      await loadProfile();
+      updateNav();
+    }
+  } catch(e) { console.log('Session error:', e); }
+}
 
-  var colors = {
-    red:    {fill:'#dc2626', stroke:'#dc2626'},
-    yellow: {fill:'#d97706', stroke:'#d97706'},
-    green:  {fill:'#16a34a', stroke:'#16a34a'}
-  };
+async function loadProfile() {
+  if(!currentUser || !supa) return;
+  if(currentUser.email === ADMIN_EMAIL) {
+    currentProfile = {full_name:'Javier Flores', trade:'General Contractor', tier:'premium', is_admin:true};
+    return;
+  }
+  try {
+    var result = await supa.from('profiles').select('*').eq('id', currentUser.id).single();
+    if(result.data) currentProfile = result.data;
+  } catch(e) { console.log('Profile error:', e); }
+}
 
-  allReports.forEach(function(r){
-    var lat = parseFloat(r.lat)||25.768;
-    var lng = parseFloat(r.lng)||-80.210;
+// ═══ LOAD REPORTS ═══
+async function loadReports() {
+  if(!supa) { useSampleData(); return; }
+  try {
+    var result = await supa.from('reports').select('*').eq('is_approved', true).order('created_at', {ascending:false});
+    if(result.error || !result.data || result.data.length === 0) {
+      useSampleData();
+    } else {
+      allReports = result.data;
+      renderMap();
+      updateStats();
+    }
+  } catch(e) {
+    useSampleData();
+  }
+}
+
+// ═══ MAP ═══
+function initMap() {
+  if(typeof L === 'undefined') {
+    setTimeout(initMap, 200);
+    return;
+  }
+  var mapEl = document.getElementById('map');
+  if(!mapEl) return;
+
+  leafMap = L.map('map', {
+    zoomControl: false,
+    scrollWheelZoom: true,
+    dragging: true,
+    touchZoom: true,
+    doubleClickZoom: false,
+    minZoom: 9,
+    maxZoom: 18
+  }).setView([25.768, -80.210], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(leafMap);
+
+  // Fix blank map on Safari
+  setTimeout(function() {
+    if(leafMap) leafMap.invalidateSize();
+  }, 200);
+  setTimeout(function() {
+    if(leafMap) leafMap.invalidateSize();
+  }, 500);
+  setTimeout(function() {
+    if(leafMap) leafMap.invalidateSize();
+  }, 1500);
+}
+
+function renderMap() {
+  if(!leafMap) { setTimeout(renderMap, 300); return; }
+
+  // Clear old markers
+  mapMarkers.forEach(function(m) { leafMap.removeLayer(m); });
+  mapMarkers = [];
+
+  var colors = {red:'#dc2626', yellow:'#d97706', green:'#16a34a'};
+
+  allReports.forEach(function(r) {
+    var lat = parseFloat(r.lat);
+    var lng = parseFloat(r.lng);
+    if(!lat || !lng) return;
+
     var col = colors[r.status] || colors.red;
 
-    if(isPrem){
-      // PREMIUM — exact pin on the house
-      var w = document.createElement('div');
-      w.style.cssText = 'position:relative;width:30px;height:30px';
-      w.innerHTML = '<div class="mpin '+ r.status[0] +(activeId===r.id?' active':'')+'">🏠</div>'
-        +(r.report_count>1?'<div class="pbadge">'+r.report_count+'</div>':'');
-      var icon = L.divIcon({html:w.outerHTML,className:'',iconSize:[30,30],iconAnchor:[15,15]});
-      var m = L.marker([lat, lng],{icon}).addTo(leafMap);
-      m.on('click',function(){selectReport(r.id)});
-      leafMarkers[r.id] = m;
-    } else {
-      // FREE — glowing transparent circle covering the area
-      // Add slight random offset so exact location is hidden
-      var offset = 0.0008;
-      var randLat = lat + (Math.random() - 0.5) * offset;
-      var randLng = lng + (Math.random() - 0.5) * offset;
+    // Outer glow
+    var outer = L.circle([lat, lng], {
+      radius: 130, color: col, fillColor: col,
+      fillOpacity: 0.07, weight: 0, interactive: false
+    }).addTo(leafMap);
 
-      // Outer glow circle (large, very transparent)
-      var outerCircle = L.circle([randLat, randLng], {
-        radius: 120,
-        color: col.stroke,
-        fillColor: col.fill,
-        fillOpacity: 0.08,
-        weight: 0,
-        interactive: false
-      }).addTo(leafMap);
+    // Middle
+    var mid = L.circle([lat, lng], {
+      radius: 75, color: col, fillColor: col,
+      fillOpacity: 0.13, weight: 0, interactive: false
+    }).addTo(leafMap);
 
-      // Middle circle
-      var midCircle = L.circle([randLat, randLng], {
-        radius: 70,
-        color: col.stroke,
-        fillColor: col.fill,
-        fillOpacity: 0.14,
-        weight: 0,
-        interactive: false
-      }).addTo(leafMap);
+    // Inner clickable
+    var inner = L.circle([lat, lng], {
+      radius: 38, color: col, fillColor: col,
+      fillOpacity: 0.28, weight: 1.5, opacity: 0.5
+    }).addTo(leafMap);
 
-      // Inner circle (more opaque)
-      var innerCircle = L.circle([randLat, randLng], {
-        radius: 35,
-        color: col.stroke,
-        fillColor: col.fill,
-        fillOpacity: 0.28,
-        weight: 1.5,
-        opacity: 0.4
-      }).addTo(leafMap);
+    // Center dot
+    var dot = L.circleMarker([lat, lng], {
+      radius: 6, color: '#fff', fillColor: col,
+      fillOpacity: 1, weight: 2.5
+    }).addTo(leafMap);
 
-      // Small center dot
-      var dot = L.circleMarker([randLat, randLng], {
-        radius: 6,
-        color: '#fff',
-        fillColor: col.fill,
-        fillOpacity: 1,
-        weight: 2
-      }).addTo(leafMap);
-
-      // Click any part to open detail
-      innerCircle.on('click', function(){selectReport(r.id)});
-      dot.on('click', function(){selectReport(r.id)});
-
-      // Store all layers so we can remove them later
-      leafMarkers[r.id] = {
-        remove: function(){
-          leafMap.removeLayer(outerCircle);
-          leafMap.removeLayer(midCircle);
-          leafMap.removeLayer(innerCircle);
-          leafMap.removeLayer(dot);
-        }
-      };
+    // Count badge if multiple reports
+    if(r.report_count > 1) {
+      var icon = L.divIcon({
+        html: '<div style="background:'+col+';color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+r.report_count+'</div>',
+        className: '', iconSize: [18, 18], iconAnchor: [9, 9]
+      });
+      var badge = L.marker([lat + 0.0002, lng + 0.0003], {icon: icon, interactive: false}).addTo(leafMap);
+      mapMarkers.push(badge);
     }
+
+    inner.on('click', function() { openPinSheet(r); });
+    dot.on('click', function() { openPinSheet(r); });
+
+    mapMarkers.push(outer, mid, inner, dot);
   });
-
-  // Update stats
-  var rs = allReports.filter(function(r){return r.status==='red'}).length;
-  var ys = allReports.filter(function(r){return r.status==='yellow'}).length;
-  var gs = allReports.filter(function(r){return r.status==='green'}).length;
-  document.getElementById('ms-r').textContent = rs;
-  document.getElementById('ms-y').textContent = ys;
-  document.getElementById('ms-g').textContent = gs;
-  document.getElementById('fc-all').textContent = allReports.length;
-  document.getElementById('fc-r').textContent = rs;
-  document.getElementById('fc-y').textContent = ys;
-  document.getElementById('fc-g').textContent = gs;
-  // Mobile counters
-  if(document.getElementById('mob-r')) document.getElementById('mob-r').textContent = rs;
-  if(document.getElementById('mob-y')) document.getElementById('mob-y').textContent = ys;
-  if(document.getElementById('mob-g')) document.getElementById('mob-g').textContent = gs;
 }
 
-// ═══════════════════════════
-// LOAD REPORTS FROM SUPABASE
-// ═══════════════════════════
-async function loadReports(){
-  document.getElementById('reportList').innerHTML = '<div class="loading"><div class="spinner"></div>Loading reports…</div>';
-  const { data, error } = await supa.from('reports').select('*').eq('is_approved', true).order('created_at',{ascending:false});
-  if(error){
-    // If no real reports yet, show sample data so map looks alive
-    allReports = getSampleReports();
-  } else if(data && data.length > 0){
-    allReports = data;
-  } else {
-    // No reports in DB yet — show samples
-    allReports = getSampleReports();
-  }
-  renderList(getFiltered());
-  refreshMarkers();
+function updateStats() {
+  var r = allReports.filter(function(x){return x.status==='red'}).length;
+  var y = allReports.filter(function(x){return x.status==='yellow'}).length;
+  var g = allReports.filter(function(x){return x.status==='green'}).length;
+  document.getElementById('bs-r').textContent = r;
+  document.getElementById('bs-y').textContent = y;
+  document.getElementById('bs-g').textContent = g;
 }
 
-// ═══════════════════════════
-// SAMPLE DATA (until real reports come in)
-// ═══════════════════════════
-function getSampleReports(){
-  return [
-    {id:'s1',status:'red',address:'### NE 2nd Ave',full_address:'1123 NE 2nd Ave',city:'Miami, FL',trade:'Multiple Trades',loss_amount:500000,owner_name:'Social Media Influencer',comment:'Owes money to over 12 contractors. Losses exceed $500,000. Avoid at all costs.',report_count:12,lat:25.780,lng:-80.197,is_approved:true},
-    {id:'s2',status:'red',address:'### Coral Way',full_address:'1842 Coral Way',city:'Miami, FL',trade:'General Contractor',loss_amount:12000,owner_name:'Robert H.',comment:'Refused payment after job completion. Became threatening.',report_count:4,lat:25.762,lng:-80.237,is_approved:true},
-    {id:'s3',status:'red',address:'### Brickell Ave',full_address:'374 Brickell Ave',city:'Miami, FL',trade:'Electrician',loss_amount:8500,owner_name:'Unknown',comment:'Physical confrontation when contractor requested payment.',report_count:7,lat:25.768,lng:-80.192,is_approved:true},
-    {id:'s4',status:'yellow',address:'### NW 5th St',full_address:'910 NW 5th St',city:'Miami, FL',trade:'Plumber',loss_amount:0,owner_name:'Sandra L.',comment:'Very slow to pay. Took 3 months. Paid in full eventually.',report_count:2,lat:25.774,lng:-80.218,is_approved:true},
-    {id:'s5',status:'yellow',address:'### SW 24th Rd',full_address:'789 SW 24th Rd',city:'Miami, FL',trade:'Roofer',loss_amount:2200,owner_name:'D. Thompson',comment:'Disputed 20% of invoice. Settled after negotiation.',report_count:2,lat:25.756,lng:-80.232,is_approved:true},
-    {id:'s6',status:'green',address:'2201 Flagler St',full_address:'2201 Flagler St',city:'Miami, FL',trade:'Landscaper',loss_amount:0,owner_name:'Mike R.',comment:'Outstanding client. Pays same day every time. Highly recommended.',report_count:3,lat:25.771,lng:-80.210,is_approved:true},
-    {id:'s7',status:'green',address:'505 SW 8th St',full_address:'505 SW 8th St',city:'Miami, FL',trade:'General Contractor',loss_amount:0,owner_name:'Patricia V.',comment:'Very professional. Always pays within 24 hours.',report_count:3,lat:25.765,lng:-80.207,is_approved:true},
-    {id:'s8',status:'green',address:'3300 Mary St',full_address:'3300 Mary St',city:'Miami, FL',trade:'HVAC',loss_amount:0,owner_name:'Chen Family',comment:'Wonderful family. Paid immediately and tipped generously.',report_count:1,lat:25.758,lng:-80.203,is_approved:true},
-    {id:'s9',status:'red',address:'### Collins Ave',full_address:'7200 Collins Ave',city:'Miami Beach, FL',trade:'Multiple',loss_amount:65000,owner_name:'T. Okafor',comment:'Eight contractors flagged this property. Major scammer.',report_count:8,lat:25.760,lng:-80.175,is_approved:true},
-    {id:'s10',status:'yellow',address:'### SW 7th St',full_address:'2240 SW 7th St',city:'Miami, FL',trade:'Painter',loss_amount:1800,owner_name:'Anonymous',comment:'Disputes small amounts at end of every job.',report_count:3,lat:25.748,lng:-80.198,is_approved:true},
-  ];
-}
-
-// ═══════════════════════════
-// RENDER LIST
-// ═══════════════════════════
-function renderList(list){
-  var isPrem = currentProfile && currentProfile.tier === 'premium';
+// ═══ PIN SHEET ═══
+function openPinSheet(r) {
   var isAuth = !!currentUser;
-  var html = '';
-  if(!list.length){
-    html = '<div style="padding:32px 16px;text-align:center;color:var(--muted);font-size:13px">No results found</div>';
-  } else {
-    list.forEach(function(r){
-      var cls = r.status[0];
-      var badges = {red:'Danger',yellow:'Caution',green:'Safe'};
-      var addrShow = isPrem ? (r.full_address||r.address) : r.address;
-      var isActive = activeId===r.id;
-      html += '<div class="rrow'+(isActive?' active':'')+'" onclick="selectReport(\''+r.id+'\')">'+
-        '<div class="rbar '+cls+'"></div>'+
-        '<div class="rbody">'+
-          '<div class="rtop">'+
-            '<div class="raddr'+((!isPrem&&r.status!=='green')?' blur':'')+'">'+addrShow+', '+r.city+'</div>'+
-            '<div class="rbadge '+cls+'">'+badges[r.status]+'</div>'+
-          '</div>'+
-          '<div class="rpreview'+(!isAuth?' blur':'')+'">'+r.comment+'</div>'+
-          '<div class="rmeta">'+
-            '<span class="rchip">📋 '+r.report_count+' report'+(r.report_count>1?'s':'')+'</span>'+
-            '<span class="rchip">🔧 '+r.trade+'</span>'+
-            (isPrem&&r.loss_amount>0?'<span class="rchip loss">💸 $'+Number(r.loss_amount).toLocaleString()+'</span>':'')+
-          '</div>'+
-          (!isAuth?'<div class="rlock">🔒 Sign up free to see more</div>':
-           !isPrem&&r.status!=='green'?'<div class="rlock">🔒 Subscribe to unlock full details</div>':'')+
-        '</div>'+
-      '</div>';
-    });
-  }
-  document.getElementById('reportList').innerHTML = html;
-}
-
-// ═══════════════════════════
-// SELECT REPORT
-// ═══════════════════════════
-function selectReport(id){
-  activeId = id;
-  var r = allReports.find(function(x){return x.id===id});
-  if(!r) return;
-  renderList(getFiltered());
-  refreshMarkers();
-  if(leafMap && r.lat && r.lng) leafMap.panTo([parseFloat(r.lat),parseFloat(r.lng)],{animate:true,duration:.4});
-  openDetail(r);
-}
-
-function openDetail(r){
-  var isPrem = currentProfile && currentProfile.tier==='premium';
-  var isAuth = !!currentUser;
+  var labels = {red:'🚨 DANGER', yellow:'⚠️ CAUTION', green:'✅ SAFE CLIENT'};
   var cls = r.status[0];
-  var labels = {red:'🚨 DANGER — DO NOT WORK HERE',yellow:'⚠️ USE CAUTION',green:'✅ SAFE CLIENT'};
 
-  // HEAD
-  var head = '<button class="detail-close" onclick="closeDetail()">✕</button>'+
-    '<div class="dstatus '+cls+'">'+labels[r.status]+'</div>'+
-    '<div class="daddr'+(isPrem||r.status==='green'?'':' blur')+'">'+
-      (isPrem?(r.full_address||r.address):r.address)+', '+r.city+
-    '</div>'+
-    '<div class="downer">'+(isPrem?'Owner: '+(r.owner_name||'Unknown'):'Owner: 🔒 Premium only')+'</div>'+
-    '<div class="dchips">'+
-      '<span class="dchip">📋 '+r.report_count+' report'+(r.report_count>1?'s':'')+'</span>'+
-      '<span class="dchip">🔧 '+r.trade+'</span>'+
-      (isPrem&&r.loss_amount>0?'<span class="dchip loss">💸 $'+Number(r.loss_amount).toLocaleString()+'</span>':'')+
-    '</div>';
-  document.getElementById('detailHead').innerHTML = head;
+  var html = '<div class="pin-tag '+cls+'">'+labels[r.status]+'</div>';
+  html += '<div class="pin-addr">'+r.address+', '+r.city+'</div>';
+  html += '<div class="pin-meta">'+(isAuth ? 'Owner: '+(r.owner_name||'Unknown') : 'Owner: 🔒 Sign up to see')+'</div>';
+  html += '<div class="pin-chips">';
+  html += '<span class="chip">📋 '+r.report_count+' report'+(r.report_count>1?'s':'')+'</span>';
+  html += '<span class="chip">🔧 '+r.trade+'</span>';
+  if(isAuth && r.loss_amount > 0) html += '<span class="chip loss">💸 $'+Number(r.loss_amount).toLocaleString()+' lost</span>';
+  html += '</div>';
 
-  // BODY
-  var body = '<div class="dsec"><div class="dsec-label">Report</div>'+
-    '<div class="dtext'+(isAuth?'':' blur')+'">'+r.comment+'</div>';
-  if(!isAuth){
-    body += '<div class="lock-box"><p>Create a free account to read reports.</p>'+
-      '<button class="btn btn-ink btn-block" onclick="closeDetail();openModal(\'modal-signup\')">Sign Up Free →</button></div>';
-  } else if(!isPrem && r.status!=='green'){
-    body += '<div class="lock-box" style="margin-top:10px"><p>Subscribe to see the full address, owner name, money lost and timeline.</p>'+
-      '<button class="btn btn-gold btn-block" onclick="closeDetail();openModal(\'modal-upgrade\')">⭐ Upgrade — $19.99/mo</button></div>';
-  }
-  body += '</div>';
-
-  if(isPrem){
-    body += '<div class="dsec"><div class="dsec-label">Full Details</div>'+
-      '<div style="display:flex;flex-direction:column;gap:7px">'+
-        '<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Full Address</span><b>'+(r.full_address||r.address)+'</b></div>'+
-        '<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Owner</span><b>'+(r.owner_name||'Unknown')+'</b></div>'+
-        (r.loss_amount>0?'<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Amount Lost</span><b style="color:var(--danger)">$'+Number(r.loss_amount).toLocaleString()+'</b></div>':'')+
-      '</div></div>';
-    if(r.is_resolved && r.resolved_note){
-      body += '<div class="dsec"><div class="dsec-label">Resolution</div>'+
-        '<div style="background:var(--safe-bg);border:1px solid #bbf7d0;border-radius:8px;padding:11px;font-size:12px;color:var(--safe)">✓ '+r.resolved_note+'</div></div>';
-    }
-  }
-
-  document.getElementById('detailBody').innerHTML = body;
-  document.getElementById('detailPanel').classList.add('open');
-}
-
-function closeDetail(){
-  document.getElementById('detailPanel').classList.remove('open');
-  activeId = null;
-  renderList(getFiltered());
-  refreshMarkers();
-}
-
-// ═══════════════════════════
-// FILTER + SEARCH
-// ═══════════════════════════
-function filterBy(f, el){
-  activeFilter = f;
-  document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active')});
-  el.classList.add('active');
-  renderList(getFiltered());
-}
-
-function getFiltered(){
-  var q = document.getElementById('searchInput').value.toLowerCase().trim();
-  return allReports.filter(function(r){
-    var mf = activeFilter==='all'||r.status===activeFilter;
-    var ms = !q||r.address.toLowerCase().includes(q)||r.city.toLowerCase().includes(q)||r.trade.toLowerCase().includes(q);
-    return mf && ms;
-  });
-}
-
-function doSearch(){ renderList(getFiltered()); }
-
-// ═══════════════════════════
-// USER BAR + FOOTER
-// ═══════════════════════════
-function updateUserBar(){
-  var bar = document.getElementById('userBar');
-  var foot = document.getElementById('panelFoot');
-  if(!currentUser){
-    bar.innerHTML = '<div class="user-bar-text"><div class="user-bar-name">Not signed in</div><div class="user-bar-tier">Sign up free to search any address</div></div>'+
-      '<button class="btn btn-ink" style="padding:6px 14px;font-size:12px" onclick="openModal(\'modal-signup\')">Join Free</button>';
-    foot.innerHTML = '<button class="foot-btn outline" onclick="openModal(\'modal-signup\')"><span>🛡️ Create free account</span><span class="arrow">→</span></button>';
-  } else if(currentProfile && currentProfile.tier==='premium'){
-    bar.innerHTML = '<div class="user-bar-text"><div class="user-bar-name">'+( currentProfile.full_name||currentUser.email)+'</div><div class="user-bar-tier"><span class="tier-dot premium"></span>Premium — full access</div></div>'+
-      '<button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="handleSignout()">Sign Out</button>';
-    foot.innerHTML = '<button class="foot-btn dark" onclick="openModal(\'modal-report\')"><span>📍 Report a Property</span><span class="arrow">→</span></button>';
+  if(isAuth) {
+    html += '<div class="pin-comment">'+r.comment+'</div>';
+    html += '<div class="pin-actions"><button class="btn btn-ink btn-block" onclick="closeSheet(\'sheet-pin\')">Close</button></div>';
   } else {
-    var name = currentProfile ? currentProfile.full_name : currentUser.email;
-    bar.innerHTML = '<div class="user-bar-text"><div class="user-bar-name">'+(name||currentUser.email)+'</div><div class="user-bar-tier"><span class="tier-dot free"></span>Free account</div></div>'+
-      '<button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="handleSignout()">Out</button>';
-    foot.innerHTML = '<button class="foot-btn gold" onclick="openModal(\'modal-upgrade\')"><span>⭐ Upgrade to Premium</span><span class="arrow">→</span></button>';
+    html += '<div class="pin-comment" style="filter:blur(5px);user-select:none">'+r.comment+'</div>';
+    html += '<div class="pin-actions">';
+    html += '<button class="btn btn-ink btn-block" onclick="closeSheet(\'sheet-pin\');openSheet(\'sheet-signup\')">🛡️ Join Free — See Full Details</button>';
+    html += '<button class="btn btn-outline btn-block" onclick="closeSheet(\'sheet-pin\')">Close</button>';
+    html += '</div>';
   }
+
+  document.getElementById('pin-content').innerHTML = html;
+  openSheet('sheet-pin');
+
+  if(leafMap) leafMap.panTo([parseFloat(r.lat), parseFloat(r.lng)], {animate:true});
 }
 
-// ═══════════════════════════
-// AUTH
-// ═══════════════════════════
-async function handleSignup(){
+// ═══ AUTH ═══
+async function handleSignup() {
+  if(!supa) { showToast('⚠️ Connection error. Try again.'); return; }
   var fname = document.getElementById('s-fname').value.trim();
   var lname = document.getElementById('s-lname').value.trim();
   var email = document.getElementById('s-email').value.trim();
   var trade = document.getElementById('s-trade').value;
   var pass = document.getElementById('s-pass').value;
   var err = document.getElementById('signup-err');
-  err.style.display='none';
-  if(!fname||!email||!pass){ showErr(err,'Please fill in all fields.'); return; }
-  if(pass.length<6){ showErr(err,'Password must be at least 6 characters.'); return; }
-  var btn = event.target; btn.textContent='Creating…'; btn.disabled=true;
+  err.style.display = 'none';
+
+  if(!fname||!email||!pass){ showFormErr(err,'Please fill in all fields.'); return; }
+  if(pass.length < 6){ showFormErr(err,'Password must be at least 6 characters.'); return; }
+
+  var btn = document.getElementById('signup-btn');
+  btn.textContent = 'Creating…'; btn.disabled = true;
 
   try {
-    const { data, error } = await supa.auth.signUp({
-      email: email,
-      password: pass,
-      options: {
-        data: {
-          full_name: fname+' '+lname,
-          trade: trade || 'General Contractor'
-        }
-      }
+    var result = await supa.auth.signUp({
+      email: email, password: pass,
+      options: { data: { full_name: fname+' '+lname, trade: trade } }
     });
+    btn.textContent = 'Create Free Account →'; btn.disabled = false;
 
-    btn.textContent='Create Account →'; btn.disabled=false;
+    if(result.error){ showFormErr(err, result.error.message); return; }
 
-    if(error){
-      showErr(err, 'Auth error: ' + error.message + ' | Code: ' + (error.status||'?'));
-      return;
-    }
+    currentUser = result.data.user;
+    currentProfile = { full_name: fname+' '+lname, trade: trade, tier: 'free' };
 
-    // Try to save profile but don't block signup if it fails
-    if(data && data.user){
+    // Save profile
+    if(supa && currentUser) {
       try {
         await supa.from('profiles').upsert({
-          id: data.user.id,
-          full_name: fname+' '+lname,
-          trade: trade || 'General Contractor',
-          tier: 'free'
-        }, { onConflict: 'id' });
-      } catch(profileErr){
-        console.log('Profile save error (non-blocking):', profileErr);
-      }
-      currentUser = data.user;
-      currentProfile = { full_name: fname+' '+lname, trade: trade, tier: 'free' };
+          id: currentUser.id, full_name: fname+' '+lname, trade: trade, tier: 'free'
+        });
+      } catch(e) {}
     }
 
-    closeModal('modal-signup');
-    updateUserBar();
-    renderList(getFiltered());
+    closeSheet('sheet-signup');
+    updateNav();
     showToast('✅ Welcome to ShieldsMap, '+fname+'!');
-
-  } catch(e){
-    btn.textContent='Create Account →'; btn.disabled=false;
-    showErr(err, 'Caught error: ' + e.message + ' | ' + JSON.stringify(e));
+  } catch(e) {
+    btn.textContent = 'Create Free Account →'; btn.disabled = false;
+    showFormErr(err, 'Error: '+e.message);
   }
 }
 
-async function handleLogin(){
+async function handleLogin() {
+  if(!supa) { showToast('⚠️ Connection error. Try again.'); return; }
   var email = document.getElementById('l-email').value.trim();
   var pass = document.getElementById('l-pass').value;
   var err = document.getElementById('login-err');
-  err.style.display='none';
-  if(!email||!pass){ showErr(err,'Please enter email and password.'); return; }
-  var btn = event.target; btn.textContent='Signing in…'; btn.disabled=true;
-  const { data, error } = await supa.auth.signInWithPassword({email, password:pass});
-  btn.textContent='Sign In →'; btn.disabled=false;
-  if(error){ showErr(err, error.message); return; }
-  closeModal('modal-login');
-  showToast('✅ Welcome back!');
+  err.style.display = 'none';
+
+  if(!email||!pass){ showFormErr(err,'Please enter email and password.'); return; }
+
+  var btn = document.getElementById('login-btn');
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  try {
+    var result = await supa.auth.signInWithPassword({email: email, password: pass});
+    btn.textContent = 'Sign In →'; btn.disabled = false;
+
+    if(result.error){ showFormErr(err, result.error.message); return; }
+
+    currentUser = result.data.user;
+    await loadProfile();
+    closeSheet('sheet-login');
+    updateNav();
+    showToast('✅ Welcome back!');
+  } catch(e) {
+    btn.textContent = 'Sign In →'; btn.disabled = false;
+    showFormErr(err, 'Error: '+e.message);
+  }
 }
 
-async function loadProfile(){
-  if(!currentUser) return;
-  const { data } = await supa.from('profiles').select('*').eq('id', currentUser.id).single();
-  currentProfile = data;
-}
-
-async function handleSignout(){
-  await supa.auth.signOut();
+async function handleSignout() {
+  if(supa) await supa.auth.signOut();
   currentUser = null; currentProfile = null;
-  updateUserBar();
-  renderList(getFiltered());
+  updateNav();
   showToast('Signed out.');
 }
 
-// ═══════════════════════════
-// SUBMIT REPORT
-// ═══════════════════════════
-async function handleReport(){
-  if(!currentUser){ openModal('modal-signup'); return; }
+function updateNav() {
+  var navRight = document.getElementById('navRight');
+  var bottomAction = document.getElementById('bottomAction');
+  if(currentUser) {
+    var isPrem = currentProfile && currentProfile.tier === 'premium';
+    var name = currentProfile ? (currentProfile.full_name||'').split(' ')[0] : currentUser.email.split('@')[0];
+    navRight.innerHTML = '<div class="user-chip"><div class="tier-dot '+(isPrem?'premium':'free')+'"></div>'+name+'</div>'+
+      '<button class="btn btn-outline btn-sm" onclick="handleSignout()">Out</button>';
+    bottomAction.innerHTML = '<button class="btn btn-ink btn-sm" onclick="openSheet(\'sheet-report\')">📍 Report</button>';
+  } else {
+    navRight.innerHTML = '<button class="btn btn-outline btn-sm" onclick="openSheet(\'sheet-login\')">Sign In</button>'+
+      '<button class="btn btn-ink btn-sm" onclick="openSheet(\'sheet-signup\')">Join Free</button>';
+    bottomAction.innerHTML = '<button class="btn btn-ink btn-sm" onclick="openSheet(\'sheet-signup\')">🛡️ Join Free</button>';
+  }
+}
+
+// ═══ REPORT ═══
+function checkAndReport() {
+  if(!currentUser) { openSheet('sheet-signup'); return; }
+  openSheet('sheet-report');
+}
+
+function pickSt(s, el) {
+  selectedStatus = s;
+  document.querySelectorAll('.sp').forEach(function(x){x.classList.remove('sel')});
+  el.classList.add('sel');
+}
+
+async function handleReport() {
+  if(!currentUser) { openSheet('sheet-signup'); return; }
+  if(!supa) { showToast('⚠️ Connection error.'); return; }
+
   var addr = document.getElementById('r-addr').value.trim();
   var city = document.getElementById('r-city').value.trim();
   var trade = document.getElementById('r-trade').value;
@@ -990,181 +639,86 @@ async function handleReport(){
   var owner = document.getElementById('r-owner').value.trim();
   var comment = document.getElementById('r-comment').value.trim();
   var err = document.getElementById('report-err');
-  err.style.display='none';
-  if(!addr||!city||!trade||!selectedStatus||!comment){ showErr(err,'Please fill in all required fields.'); return; }
-  var btn = event.target; btn.textContent='Submitting…'; btn.disabled=true;
-  // Geocode the address to get lat/lng
+  err.style.display = 'none';
+
+  if(!addr||!city||!trade||!selectedStatus||!comment){
+    showFormErr(err,'Please fill in all required fields.'); return;
+  }
+
+  var btn = document.getElementById('report-btn');
+  btn.textContent = 'Submitting…'; btn.disabled = true;
+
+  // Geocode
   var lat = null, lng = null;
   try {
-    var geoQuery = encodeURIComponent(addr + ', ' + city);
-    var geoRes = await fetch('https://nominatim.openstreetmap.org/search?q=' + geoQuery + '&format=json&limit=1');
-    var geoData = await geoRes.json();
-    if(geoData && geoData.length > 0){
+    var geo = await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(addr+', '+city)+'&format=json&limit=1');
+    var geoData = await geo.json();
+    if(geoData && geoData.length > 0) {
       lat = parseFloat(geoData[0].lat);
       lng = parseFloat(geoData[0].lon);
     }
-  } catch(e){ console.log('Geocoding failed:', e); }
+  } catch(e) {}
 
-  const { error } = await supa.from('reports').insert({
-    user_id: currentUser.id,
-    address: addr, full_address: addr + ', ' + city,
-    city, owner_name: owner, trade,
-    status: selectedStatus, comment, loss_amount: loss,
-    is_approved: false, report_count: 1,
-    lat: lat, lng: lng
-  });
-  btn.textContent='Submit for Review →'; btn.disabled=false;
-  if(error){ showErr(err, error.message); return; }
-  closeModal('modal-report');
-  showToast('✅ Report submitted! Admin will review shortly.');
-  // Clear form
-  ['r-addr','r-city','r-owner','r-loss','r-comment'].forEach(function(id){ document.getElementById(id).value=''; });
-  document.getElementById('r-trade').value='';
-  selectedStatus='';
-  document.querySelectorAll('.sp').forEach(function(s){s.classList.remove('sel')});
-}
+  try {
+    var result = await supa.from('reports').insert({
+      user_id: currentUser.id,
+      address: addr, full_address: addr+', '+city,
+      city: city, owner_name: owner, trade: trade,
+      status: selectedStatus, comment: comment,
+      loss_amount: loss, lat: lat, lng: lng,
+      is_approved: false, report_count: 1
+    });
 
-function pickStatus(s, el){
-  selectedStatus = s;
-  document.querySelectorAll('.sp').forEach(function(x){x.classList.remove('sel')});
-  el.classList.add('sel');
-}
+    btn.textContent = 'Submit for Review →'; btn.disabled = false;
 
-// ═══════════════════════════
-// MODALS
-// ═══════════════════════════
-function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-function switchModal(a,b){ closeModal(a); openModal(b); }
-document.querySelectorAll('.overlay').forEach(function(o){
-  o.addEventListener('click',function(e){ if(e.target===o) o.classList.remove('open'); });
-});
+    if(result.error){ showFormErr(err, result.error.message); return; }
 
-function showErr(el, msg){ el.textContent=msg; el.style.display='block'; }
+    closeSheet('sheet-report');
+    showToast('✅ Report submitted! Admin will review shortly.');
 
-// ═══════════════════════════
-// TOAST
-// ═══════════════════════════
-var tt;
-// ═══════════════════════════
-// CONTRACTORS
-// ═══════════════════════════
-var sampleContractors = [
-  {name:'Carlos Mendez',trade:'General Contractor',city:'Miami, FL',years:12,rating:4.9,reviews:23,emoji:'👷',bio:'Specializes in full home renovations. Licensed and insured. Always shows up on time.'},
-  {name:'James Thompson',trade:'Electrician',city:'Orlando, FL',years:8,rating:5.0,reviews:14,emoji:'🔌',bio:'Residential and commercial electrical. 24hr emergency service available.'},
-  {name:'Maria Rodriguez',trade:'Plumber',city:'Tampa, FL',years:15,rating:4.8,reviews:31,emoji:'🔧',bio:'Full plumbing services. Free estimates. Senior discounts available.'},
-  {name:'Luis Garcia',trade:'Roofer',city:'Miami, FL',years:10,rating:4.9,reviews:18,emoji:'🏠',bio:'Roof replacements, repairs, and inspections. Hurricane certified.'},
-  {name:'Ana Perez',trade:'Painter',city:'Fort Lauderdale, FL',years:6,rating:5.0,reviews:9,emoji:'🎨',bio:'Interior and exterior painting. Commercial and residential.'},
-  {name:'Mike Chen',trade:'HVAC',city:'Orlando, FL',years:14,rating:4.7,reviews:42,emoji:'❄️',bio:'AC installation, repair and maintenance. All brands serviced.'},
-];
+    // Clear form
+    ['r-addr','r-city','r-owner','r-loss','r-comment'].forEach(function(id){
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('r-trade').value = '';
+    selectedStatus = '';
+    document.querySelectorAll('.sp').forEach(function(s){s.classList.remove('sel')});
 
-function switchMainTab(tab, el){
-  document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active')});
-  el.classList.add('active');
-  document.querySelectorAll('.panel-view').forEach(function(v){v.classList.remove('active')});
-  document.getElementById('view-'+tab).classList.add('active');
-  if(tab==='contractors') renderContractors();
-}
-
-function renderContractors(){
-  var isPrem = currentProfile && currentProfile.tier==='premium';
-  var html = '';
-
-  // Add yourself box
-  if(isPrem){
-    html += '<div class="add-ctr-box">' +
-      '<div class="add-ctr-badge">⭐ Premium Member</div>' +
-      '<h4>Add yourself to the directory</h4>' +
-      '<p>You are a Premium member. Add your profile so homeowners and other contractors can find and recommend you.</p>' +
-      '<button class="btn btn-gold btn-block" style="border-radius:8px" onclick="showToast('📋 Contractor profile form coming soon!')">+ Add My Profile</button>' +
-      '</div>';
-  } else {
-    html += '<div class="add-ctr-box">' +
-      '<div class="add-ctr-badge">⭐ Premium Only</div>' +
-      '<h4>Get listed as a Trusted Contractor</h4>' +
-      '<p>Subscribe to Premium to add your profile. Homeowners and contractors will find you here.</p>' +
-      '<button class="btn btn-gold btn-block" style="border-radius:8px" onclick="openModal('modal-upgrade')">⭐ Upgrade to Get Listed</button>' +
-      '</div>';
+  } catch(e) {
+    btn.textContent = 'Submit for Review →'; btn.disabled = false;
+    showFormErr(err, 'Error: '+e.message);
   }
-
-  // Contractor cards
-  sampleContractors.forEach(function(c){
-    var stars = '';
-    for(var i=0;i<5;i++) stars += i < Math.floor(c.rating) ? '★' : '☆';
-    html += '<div class="ctr-card">' +
-      '<div class="ctr-top">' +
-        '<div class="ctr-avatar">'+c.emoji+'</div>' +
-        '<div style="flex:1;min-width:0">' +
-          '<div class="ctr-name">'+c.name+'</div>' +
-          '<div class="ctr-trade">'+c.trade+'</div>' +
-        '</div>' +
-        '<div class="ctr-verified">✓ Verified</div>' +
-      '</div>' +
-      '<div class="ctr-chips">' +
-        '<span class="ctr-chip">📍 '+c.city+'</span>' +
-        '<span class="ctr-chip">'+c.years+'yr exp</span>' +
-      '</div>' +
-      '<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px">'+c.bio+'</div>' +
-      '<div class="ctr-reviews"><span class="ctr-stars">'+stars+'</span> '+c.rating+' · '+c.reviews+' reviews</div>' +
-    '</div>';
-  });
-
-  document.getElementById('ctrsList').innerHTML = html;
 }
 
-function openAbout(){
-  document.getElementById('aboutSection').classList.add('open');
+// ═══ SHEETS ═══
+function openSheet(id) {
+  document.getElementById('sheet-bg').classList.add('open');
+  document.getElementById(id).classList.add('open');
 }
-function closeAbout(){
-  document.getElementById('aboutSection').classList.remove('open');
+function closeSheet(id) {
+  document.getElementById(id).classList.remove('open');
+  var anyOpen = document.querySelectorAll('.sheet.open').length > 0;
+  if(!anyOpen) document.getElementById('sheet-bg').classList.remove('open');
+}
+function closeAllSheets() {
+  document.querySelectorAll('.sheet.open').forEach(function(s){s.classList.remove('open')});
+  document.getElementById('sheet-bg').classList.remove('open');
+}
+function switchSheet(from, to) {
+  closeSheet(from);
+  openSheet(to);
 }
 
-function showToast(msg){
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(tt); tt=setTimeout(function(){t.classList.remove('show');},3200);
+// ═══ HELPERS ═══
+function showFormErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+var toastTimer;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 </script>
-
-<!-- ABOUT TRIGGER -->
-<button class="about-trigger" onclick="openAbout()">
-  ℹ️ Why does ShieldsMap exist?
-</button>
-
-<!-- ABOUT SECTION -->
-<div class="about-section" id="aboutSection">
-  <div class="about-handle"></div>
-  <button class="about-close" onclick="closeAbout()">✕</button>
-  <div class="about-inner">
-    <div class="about-eyebrow">Our Mission</div>
-    <div class="about-title">Built by a contractor.<br>For every contractor<br>who was left <em>unpaid.</em></div>
-    <div class="about-body">
-      <p>Every day across the United States, hardworking contractors — electricians, plumbers, painters, roofers, general contractors — complete jobs in good faith and never receive payment. They have no warning. No protection. No way to know it happened to the contractor before them.</p>
-      <p>ShieldsMap was created to change that. When a contractor experiences a payment dispute, they can report that property. The report is reviewed by our admin team before it ever goes live — ensuring accuracy and fairness. Future contractors can search any address before accepting a job and make an informed decision.</p>
-      <p>This is not a blacklist. This is a community of professionals protecting each other — the same way a neighborhood watch protects a community. Green properties celebrate clients who treat contractors with respect. Yellow properties flag payment delays worth noting. Red properties document serious, unresolved disputes.</p>
-      <p>No contractor should lose their savings, their business, or their health because one client refused to honor an agreement. ShieldsMap exists so that never has to happen again.</p>
-    </div>
-
-    <div class="about-stats">
-      <div class="astat">
-        <div class="astat-n r">1 in 4</div>
-        <div class="astat-l">contractors experience a serious payment dispute each year</div>
-      </div>
-      <div class="astat">
-        <div class="astat-n">$50B+</div>
-        <div class="astat-l">in unpaid invoices affecting small contractors annually in the US</div>
-      </div>
-      <div class="astat">
-        <div class="astat-n r">67%</div>
-        <div class="astat-l">of contractors have no way to verify a new client before starting work</div>
-      </div>
-    </div>
-
-    <div class="about-legal">
-      <b>A note on our reports:</b> All information on ShieldsMap reflects the personal experiences and opinions of verified contractor members. Every report is reviewed by our administrative team before publication. ShieldsMap does not make legal determinations about any party. Property owners who believe a report is inaccurate may contact us to request a review. ShieldsMap operates under Section 230 of the Communications Decency Act.
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
