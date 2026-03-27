@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShieldsMap Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#111;min-height:100vh}
+nav{background:#111;height:52px;display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:100}
+nav h1{color:#fff;font-size:16px;font-weight:700;flex:1}
+nav span{background:rgba(255,255,255,.15);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.wrap{max-width:680px;margin:0 auto;padding:16px}
+.login-box{background:#fff;border-radius:12px;padding:28px;margin-top:60px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.login-box h2{font-size:20px;margin-bottom:4px}
+.login-box p{font-size:13px;color:#666;margin-bottom:20px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:4px}
+.field input{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 12px;font-size:15px;outline:none;-webkit-appearance:none}
+.field input:focus{border-color:#111}
+.err{background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;padding:9px 12px;font-size:12px;color:#dc2626;margin-bottom:12px;display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:8px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;width:100%;font-family:inherit;transition:opacity .15s}
+.btn:active{opacity:.8}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-dark{background:#111;color:#fff}
+.btn-green{background:#16a34a;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.btn-gray{background:#f3f4f6;border:1.5px solid #e5e7eb;color:#374151}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.stat-n{font-size:28px;font-weight:800;line-height:1}
+.stat-n.orange{color:#d97706}
+.stat-n.green{color:#16a34a}
+.stat-n.blue{color:#2563eb}
+.stat-l{font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.tabs{display:flex;background:#fff;border-radius:10px;padding:3px;margin-bottom:16px;gap:3px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tab{flex:1;padding:9px;text-align:center;font-size:12px;font-weight:700;border-radius:7px;cursor:pointer;color:#6b7280;border:none;background:transparent;font-family:inherit}
+.tab.active{background:#111;color:#fff}
+.card{background:#fff;border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-head{padding:14px 16px 10px;border-bottom:1px solid #f3f4f6}
+.card-status{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.card-status.red{color:#dc2626}
+.card-status.yellow{color:#d97706}
+.card-status.green{color:#16a34a}
+.card-status.pending{color:#d97706}
+.card-addr{font-size:17px;font-weight:700;margin-bottom:2px}
+.card-meta{font-size:11px;color:#9ca3af}
+.card-body{padding:12px 16px;border-bottom:1px solid #f3f4f6}
+.card-comment{font-size:13px;color:#6b7280;line-height:1.55;margin-bottom:8px}
+.card-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:2px 8px;color:#6b7280;font-weight:600}
+.chip.loss{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+.card-actions{padding:10px 16px;display:flex;gap:8px}
+.card-actions .btn{flex:1;padding:9px}
+.user-card{background:#fff;border-radius:10px;padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.user-emoji{font-size:22px;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:700}
+.user-trade{font-size:11px;color:#9ca3af}
+.user-tier{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
+.user-tier.free{background:#f3f4f6;color:#6b7280}
+.user-tier.premium{background:#fffbeb;color:#d97706}
+.empty{text-align:center;padding:40px 20px;color:#9ca3af}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-title{font-size:15px;font-weight:700;color:#374151;margin-bottom:4px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#111;color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:700;z-index:9999;transition:transform .3s;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+#mainPanel{display:none}
+#signoutBtn{display:none;width:auto;padding:6px 12px;font-size:11px}
+</style>
+</head>
+<body>
+<nav>
+  <h1>ShieldsMap Admin</h1>
+  <span id="navBadge">Admin</span>
+  <button class="btn btn-gray" id="signoutBtn" onclick="handleSignout()">Sign Out</button>
+</nav>
+<div class="wrap" id="loginPanel">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <p>ShieldsMap admin access only.</p>
+    <div class="err" id="login-err"></div>
+    <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="your@email.com" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input type="password" id="l-pass" placeholder="Password" autocomplete="current-password"></div>
+    <button class="btn btn-dark" id="login-btn" onclick="handleLogin()">Sign In</button>
+  </div>
+</div>
+<div class="wrap" id="mainPanel">
+  <div class="stats">
+    <div class="stat"><div class="stat-n orange" id="st-pending">0</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-n green" id="st-approved">0</div><div class="stat-l">Live</div></div>
+    <div class="stat"><div class="stat-n blue" id="st-users">0</div><div class="stat-l">Users</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('pending',this)">Pending</button>
+    <button class="tab" onclick="switchTab('approved',this)">Live</button>
+    <button class="tab" onclick="switchTab('users',this)">Users</button>
+  </div>
+  <div id="tab-pending"></div>
+  <div id="tab-approved" style="display:none"></div>
+  <div id="tab-users" style="display:none"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var SUPA_URL='https://uysgdhjbtstuwowtkmvi.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5c2dkaGpidHN0dXdvd3RrbXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgwODQsImV4cCI6MjA4OTk2NDA4NH0.THlq-dYcnO7CzHXKRk337zbGL46MDE0hlc4FcuaUYKU';
+var ADMIN='javierflmx@me.com';
+var supa=null,allReports=[],allUsers=[];
+
+var sc=document.createElement('script');
+sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+sc.onload=function(){
+  supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+  supa.auth.getSession().then(function(r){
+    if(r.data&&r.data.session&&r.data.session.user.email===ADMIN){showPanel();loadAll();}
+  });
+};
+document.head.appendChild(sc);
+
+async function handleLogin(){
+  var email=document.getElementById('l-email').value.trim();
+  var pass=document.getElementById('l-pass').value;
+  var err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='Please fill all fields.';err.style.display='block';return;}
+  if(email!==ADMIN){err.textContent='Admin only.';err.style.display='block';return;}
+  var btn=document.getElementById('login-btn');
+  btn.textContent='Signing in…';btn.disabled=true;
+  var r=await supa.auth.signInWithPassword({email:email,password:pass});
+  btn.textContent='Sign In';btn.disabled=false;
+  if(r.error){err.textContent=r.error.message;err.style.display='block';return;}
+  showPanel();loadAll();
+}
+
+async function handleSignout(){
+  await supa.auth.signOut();
+  document.getElementById('loginPanel').style.display='block';
+  document.getElementById('mainPanel').style.display='none';
+  document.getElementById('signoutBtn').style.display='none';
+}
+
+function showPanel(){
+  document.getElementById('loginPanel').style.display='none';
+  document.getElementById('mainPanel').style.display='block';
+  document.getElementById('signoutBtn').style.display='inline-flex';
+}
+
+async function loadAll(){
+  loadReports();loadUsers();
+}
+
+async function loadReports(){
+  document.getElementById('tab-pending').innerHTML='<div class="empty"><div class="empty-icon">⏳</div><div class="empty-title">Loading reports…</div></div>';
+  var r=await supa.from('reports').select('*').order('created_at',{ascending:false});
+  if(r.error){
+    document.getElementById('tab-pending').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Error</div><p style="font-size:12px;color:#9ca3af">'+r.error.message+'</p></div>';
+    return;
+  }
+  allReports=r.data||[];
+  updateStats();renderPending();renderApproved();
+}
+
+async function loadUsers(){
+  var r=await supa.from('profiles').select('*').order('created_at',{ascending:false});
+  allUsers=r.data||[];
+  document.getElementById('st-users').textContent=allUsers.length;
+  renderUsers();
+}
+
+function updateStats(){
+  var p=allReports.filter(function(r){return !r.is_approved}).length;
+  var a=allReports.filter(function(r){return r.is_approved}).length;
+  document.getElementById('st-pending').textContent=p;
+  document.getElementById('st-approved').textContent=a;
+  document.getElementById('navBadge').textContent=p>0?p+' Pending':'Admin';
+  document.getElementById('navBadge').style.background=p>0?'rgba(220,38,38,.4)':'rgba(255,255,255,.15)';
+}
+
+function card(r,approved){
+  var sl={red:'DANGER',yellow:'CAUTION',green:'SAFE'};
+  var d=new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  return '<div class="card" id="rc-'+r.id+'">'+
+    '<div class="card-head">'+
+      '<div class="card-status '+(approved?r.status:'pending')+'">'+(approved?(sl[r.status]||r.status.toUpperCase()):'PENDING REVIEW')+'</div>'+
+      '<div class="card-addr">'+(r.full_address||r.address||'No address')+', '+(r.city||'')+'</div>'+
+      '<div class="card-meta">'+d+' · '+(r.trade||'Unknown trade')+'</div>'+
+    '</div>'+
+    '<div class="card-body">'+
+      '<div class="card-comment">'+(r.comment||'No comment provided')+'</div>'+
+      '<div class="card-chips">'+
+        (r.owner_name?'<span class="chip">Owner: '+r.owner_name+'</span>':'')+
+        (r.loss_amount>0?'<span class="chip loss">Lost: $'+Number(r.loss_amount).toLocaleString()+'</span>':'')+
+        '<span class="chip">'+(r.lat?'GPS OK':'No GPS')+'</span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card-actions">'+
+      (!approved
+        ?'<button class="btn btn-green" onclick="approve(\''+r.id+'\')">Approve</button>'+
+          '<button class="btn btn-red" onclick="reject(\''+r.id+'\')">Reject</button>'
+        :'<button class="btn btn-gray" onclick="remove(\''+r.id+'\')">Remove from map</button>'
+      )+
+    '</div>'+
+  '</div>';
+}
+
+function renderPending(){
+  var list=allReports.filter(function(r){return !r.is_approved});
+  var el=document.getElementById('tab-pending');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No pending reports</div><p style="font-size:13px;color:#9ca3af">Reports submitted by contractors appear here.</p></div>';return;}
+  el.innerHTML=list.map(function(r){return card(r,false);}).join('');
+}
+
+function renderApproved(){
+  var list=allReports.filter(function(r){return r.is_approved});
+  var el=document.getElementById('tab-approved');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">No live reports yet</div></div>';return;}
+  el.innerHTML=list.map(function(r){return card(r,true);}).join('');
+}
+
+function renderUsers(){
+  var el=document.getElementById('tab-users');
+  if(!allUsers.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">No users yet</div></div>';return;}
+  var em={'General Contractor':'👷','Electrician':'🔌','Plumber':'🔧','Landscaper':'🌿','HVAC':'❄️','Painter':'🎨','Roofer':'🏠'};
+  el.innerHTML=allUsers.map(function(u){
+    return '<div class="user-card">'+
+      '<div class="user-emoji">'+(em[u.trade]||'👤')+'</div>'+
+      '<div class="user-info"><div class="user-name">'+(u.full_name||'Unknown')+'</div><div class="user-trade">'+(u.trade||'No trade')+'</div></div>'+
+      '<div><div class="user-tier '+(u.tier||'free')+'">'+(u.tier||'free')+'</div>'+
+      (u.tier!=='premium'?'<button class="btn btn-gray" style="margin-top:5px;padding:4px 10px;font-size:10px;width:100%" onclick="makePremium(\''+u.id+'\')">Premium</button>':'')+
+      '</div></div>';
+  }).join('');
+}
+
+function switchTab(tab,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+  ['pending','approved','users'].forEach(function(t){
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+  });
+}
+
+async function approve(id){
+  var btn=event.target;btn.textContent='Approving…';btn.disabled=true;
+  
+  // Find the report
+  var report = allReports.find(function(x){return x.id===id;});
+  var updates = {is_approved:true};
+  
+  // Geocode if missing coordinates
+  if(report && (!report.lat || !report.lng)) {
+    try {
+      btn.textContent='Finding location…';
+      var fullAddr = (report.full_address||report.address) + ', ' + report.city + ', USA';
+      var q = encodeURIComponent(fullAddr);
+      var geo = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q='+q);
+      var geoData = await geo.json();
+      if(geoData && geoData.length > 0) {
+        updates.lat = parseFloat(geoData[0].lat);
+        updates.lng = parseFloat(geoData[0].lon);
+      }
+    } catch(e) { console.log('Geocode error:', e); }
+  }
+  
+  var r=await supa.from('reports').update(updates).eq('id',id);
+  btn.textContent='Approve';btn.disabled=false;
+  if(r.error){showToast('Error: '+r.error.message);return;}
+  allReports=allReports.map(function(x){return x.id===id?Object.assign({},x,updates):x;});
+  updateStats();renderPending();renderApproved();
+  showToast('Report approved and live on the map!');
+}
+
+async function reject(id){
+  if(!confirm('Delete this report permanently?'))return;
+  var r=await supa.from('reports').delete().eq('id',id);
+  if(r.error){showToast('Error: '+r.error.message);return;}
+  allReports=allReports.filter(function(x){return x.id!==id;});
+  updateStats();renderPending();
+  showToast('Report deleted.');
+}
+
+async function remove(id){
+  if(!confirm('Remove from map?'))return;
+  var r=await supa.from('reports').update({is_approved:false}).eq('id',id);
+  if(r.error){showToast('Error: '+r.error.message);return;}
+  allReports=allReports.map(function(x){return x.id===id?Object.assign({},x,{is_approved:false}):x;});
+  updateStats();renderApproved();
+  showToast('Report removed from map.');
+}
+
+async function makePremium(id){
+  var r=await supa.from('profiles').update({tier:'premium'}).eq('id',id);
+  if(r.error){showToast('Error: '+r.error.message);return;}
+  allUsers=allUsers.map(function(u){return u.id===id?Object.assign({},u,{tier:'premium'}):u;});
+  renderUsers();showToast('User upgraded to Premium!');
+}
+
+var tt;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('show');},3000);
+}
+</script>
+</body>
+</html>
