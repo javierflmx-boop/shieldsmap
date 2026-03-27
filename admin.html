@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ShieldsMap — Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -178,17 +178,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPA_URL = 'https://uysgdhjbtstuwowtkmvi.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5c2dkaGpidHN0dXdvd3RrbXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgwODQsImV4cCI6MjA4OTk2NDA4NH0.THlq-dYcnO7CzHXKRk337zbGL46MDE0hlc4FcuaUYKU';
 const ADMIN_EMAIL = 'javierflmx@me.com';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 var currentUser = null;
 var allReports = [];
 var allUsers = [];
+var supa = null;
 
 // ── INIT ──
-window.onload = async function(){
+window.onload = function(){
+  // Init supabase
+  try {
+    supa = window.supabase.createClient(
+      'https://uysgdhjbtstuwowtkmvi.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5c2dkaGpidHN0dXdvd3RrbXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODgwODQsImV4cCI6MjA4OTk2NDA4NH0.THlq-dYcnO7CzHXKRk337zbGL46MDE0hlc4FcuaUYKU'
+    );
+    initAdmin();
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Error: '+e.message;
+    document.getElementById('login-err').style.display = 'block';
+  }
+};
+
+async function initAdmin(){
   const { data: { session } } = await supa.auth.getSession();
   if(session){
     currentUser = session.user;
@@ -240,15 +252,43 @@ async function loadAll(){
 }
 
 async function loadReports(){
-  const { data } = await supa.from('reports').select('*').order('created_at', {ascending:false});
-  allReports = data || [];
-  updateStats();
-  renderTab('pending');
+  try {
+    var result = await supa.from('reports').select('*').order('created_at', {ascending:false});
+    if(result.error) {
+      console.log('Reports error:', result.error);
+      document.getElementById('pending-list').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Connection error</div><div class="empty-sub">'+result.error.message+'</div></div>';
+      return;
+    }
+    allReports = result.data || [];
+    updateStats();
+    renderTab('pending');
+  } catch(e) {
+    console.log('Load reports error:', e);
+    document.getElementById('pending-list').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Error loading reports</div><div class="empty-sub">'+e.message+'</div></div>';
+  }
 }
 
 async function loadUsers(){
-  const { data } = await supa.from('profiles').select('*').order('created_at', {ascending:false});
-  allUsers = data || [];
+  // Try profiles first
+  var result = await supa.from('profiles').select('*').order('created_at', {ascending:false});
+  allUsers = result.data || [];
+  
+  // If profiles empty, try to get count from reports by user_id
+  if(allUsers.length === 0) {
+    var rResult = await supa.from('reports').select('user_id').not('user_id', 'is', null);
+    var uniqueUsers = [];
+    if(rResult.data) {
+      var seen = {};
+      rResult.data.forEach(function(r){
+        if(r.user_id && !seen[r.user_id]){
+          seen[r.user_id] = true;
+          uniqueUsers.push({id:r.user_id, full_name:'Contractor', trade:'Unknown', tier:'free'});
+        }
+      });
+      allUsers = uniqueUsers;
+    }
+  }
+  
   document.getElementById('st-users').textContent = allUsers.length;
   document.getElementById('users-count').textContent = allUsers.length + ' total';
   renderUsers();
