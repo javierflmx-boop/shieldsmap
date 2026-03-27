@@ -648,16 +648,33 @@ async function handleReport() {
   var btn = document.getElementById('report-btn');
   btn.textContent = 'Submitting…'; btn.disabled = true;
 
-  // Geocode
+  // Geocode address to GPS coordinates
   var lat = null, lng = null;
   try {
-    var geo = await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(addr+', '+city)+'&format=json&limit=1');
-    var geoData = await geo.json();
-    if(geoData && geoData.length > 0) {
-      lat = parseFloat(geoData[0].lat);
-      lng = parseFloat(geoData[0].lon);
+    showToast('📍 Finding location…');
+    var fullQuery = encodeURIComponent(addr + ', ' + city + ', USA');
+    var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + fullQuery;
+    var geoRes = await fetch(geoUrl, {
+      headers: { 'User-Agent': 'ShieldsMap/1.0' }
+    });
+    var geoJson = await geoRes.json();
+    if(geoJson && geoJson.length > 0) {
+      lat = parseFloat(geoJson[0].lat);
+      lng = parseFloat(geoJson[0].lon);
+      showToast('📍 Location found!');
+    } else {
+      // Try without street number
+      var cityOnly = encodeURIComponent(city + ', USA');
+      var geoRes2 = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + cityOnly);
+      var geoJson2 = await geoRes2.json();
+      if(geoJson2 && geoJson2.length > 0) {
+        lat = parseFloat(geoJson2[0].lat);
+        lng = parseFloat(geoJson2[0].lon);
+      }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.log('Geocode error:', e);
+  }
 
   try {
     var result = await supa.from('reports').insert({
