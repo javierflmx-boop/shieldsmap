@@ -393,6 +393,7 @@ function initMap() {
   var mapEl = document.getElementById('map');
   if(!mapEl) return;
 
+  // Default center USA — will update to user location
   leafMap = L.map('map', {
     zoomControl: false,
     scrollWheelZoom: true,
@@ -401,7 +402,7 @@ function initMap() {
     doubleClickZoom: false,
     minZoom: 9,
     maxZoom: 18
-  }).setView([25.768, -80.210], 12);
+  }).setView([37.0902, -95.7129], 5);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -409,15 +410,26 @@ function initMap() {
   }).addTo(leafMap);
 
   // Fix blank map on Safari
-  setTimeout(function() {
-    if(leafMap) leafMap.invalidateSize();
-  }, 200);
-  setTimeout(function() {
-    if(leafMap) leafMap.invalidateSize();
-  }, 500);
-  setTimeout(function() {
-    if(leafMap) leafMap.invalidateSize();
-  }, 1500);
+  setTimeout(function() { if(leafMap) leafMap.invalidateSize(); }, 200);
+  setTimeout(function() { if(leafMap) leafMap.invalidateSize(); }, 500);
+  setTimeout(function() { if(leafMap) leafMap.invalidateSize(); }, 1500);
+
+  // Try to get user location
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        // Success — fly to user location
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        leafMap.flyTo([lat, lng], 12, {duration: 1.5});
+      },
+      function(err) {
+        // Denied or failed — stay on USA view
+        console.log('Location denied:', err.message);
+      },
+      { timeout: 8000, maximumAge: 300000 }
+    );
+  }
 }
 
 function renderMap() {
