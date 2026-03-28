@@ -123,6 +123,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 
 .leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
 
+/* PHOTO UPLOAD */
+.photo-upload-area{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);-webkit-tap-highlight-color:transparent}
+.photo-upload-area:active{border-color:var(--ink);background:#f0f0f0}
+.photo-upload-area .upload-icon{font-size:28px;margin-bottom:6px}
+.photo-upload-area p{font-size:13px;color:var(--muted);margin-bottom:2px;font-weight:600}
+.photo-upload-area span{font-size:11px;color:var(--muted2)}
+.photo-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.photo-thumb{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;background:var(--bg);border:1px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-family:inherit}
+
+/* PHOTO VIEWER */
+.photo-grid-view{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.photo-view-thumb{aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;background:var(--bg)}
+.photo-view-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-lightbox{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:20px}
+.photo-lightbox.open{display:flex}
+.photo-lightbox img{max-width:100%;max-height:90vh;border-radius:10px;object-fit:contain}
+.photo-lightbox-close{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-family:inherit}
+
 /* FILTER BAR */
 .filter-bar{display:flex;gap:8px;flex:1}
 .fbar-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
@@ -840,14 +860,27 @@ async function handleReport() {
   }
 
   try {
-    var result = await supa.from('reports').insert({
+    // First insert report to get ID
+    var insertResult = await supa.from('reports').insert({
       user_id: currentUser.id,
       address: addr, full_address: addr+', '+city+(zip?' '+zip:''),
       city: city, owner_name: owner, trade: trade,
       status: selectedStatus, comment: comment,
       loss_amount: loss, lat: lat, lng: lng,
-      is_approved: false, report_count: 1
-    });
+      is_approved: false, report_count: 1,
+      photo_urls: []
+    }).select('id').single();
+
+    // Upload photos if any
+    if(insertResult.data && selectedPhotos.length > 0) {
+      showToast('📸 Uploading photos…');
+      var photoUrls = await uploadPhotos(insertResult.data.id);
+      if(photoUrls.length > 0) {
+        await supa.from('reports').update({photo_urls: photoUrls}).eq('id', insertResult.data.id);
+      }
+    }
+
+    var result = insertResult;
 
     btn.textContent = 'Submit for Review →'; btn.disabled = false;
 
@@ -861,6 +894,11 @@ async function handleReport() {
       var el = document.getElementById(id);
       if(el) el.value = '';
     });
+    selectedPhotos = [];
+    var preview = document.getElementById('photo-preview');
+    if(preview) preview.innerHTML = '';
+    var photoInput = document.getElementById('photo-input');
+    if(photoInput) photoInput.value = '';
     document.getElementById('r-trade').value = '';
     selectedStatus = '';
     document.querySelectorAll('.sp').forEach(function(s){s.classList.remove('sel')});
@@ -942,6 +980,62 @@ async function submitFeedback() {
 
   closeSheet('sheet-feedback');
   showToast('⭐ Thank you! Your feedback means everything to us.');
+}
+
+// ═══ PHOTOS ═══
+var selectedPhotos = [];
+
+function handlePhotoSelect(input) {
+  var files = Array.from(input.files).slice(0, 5);
+  selectedPhotos = files;
+  var preview = document.getElementById('photo-preview');
+  preview.innerHTML = '';
+  files.forEach(function(file, i) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var div = document.createElement('div');
+      div.className = 'photo-thumb';
+      div.innerHTML = '<img src="'+e.target.result+'"><button class="photo-thumb-del" onclick="removePhoto('+i+')">✕</button>';
+      preview.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhoto(i) {
+  selectedPhotos.splice(i, 1);
+  // Rebuild preview
+  var input = document.getElementById('photo-input');
+  handlePhotoSelect({files: selectedPhotos});
+}
+
+async function uploadPhotos(reportId) {
+  if(!selectedPhotos.length || !supa) return [];
+  var urls = [];
+  for(var i = 0; i < selectedPhotos.length; i++) {
+    var file = selectedPhotos[i];
+    var ext = file.name.split('.').pop() || 'jpg';
+    var path = 'reports/' + reportId + '/' + Date.now() + '_' + i + '.' + ext;
+    try {
+      var result = await supa.storage.from('report-photos').upload(path, file, {
+        cacheControl: '3600', upsert: false
+      });
+      if(!result.error) {
+        var urlResult = supa.storage.from('report-photos').getPublicUrl(path);
+        if(urlResult.data) urls.push(urlResult.data.publicUrl);
+      }
+    } catch(e) { console.log('Photo upload error:', e); }
+  }
+  return urls;
+}
+
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('photo-lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('photo-lightbox').classList.remove('open');
 }
 
 var toastTimer;
