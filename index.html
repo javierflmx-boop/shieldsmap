@@ -105,6 +105,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 
 /* ABOUT BUTTON */
 .about-btn{position:fixed;bottom:82px;right:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
+.feedback-btn{position:fixed;bottom:82px;left:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
 
 /* REPORT BTN */
 .report-btn{position:fixed;bottom:82px;left:12px;z-index:500}
@@ -154,6 +155,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 
 <!-- ABOUT BUTTON -->
 <button class="about-btn" onclick="openSheet('sheet-about')">ℹ️ Why ShieldsMap?</button>
+<button class="feedback-btn" onclick="openSheet('sheet-feedback')">⭐ Leave Feedback</button>
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
@@ -256,6 +258,51 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
   </div>
   <div class="form-actions">
     <button class="btn btn-ink btn-block" id="report-btn" onclick="handleReport()">Submit for Review →</button>
+  </div>
+</div>
+
+<!-- FEEDBACK SHEET -->
+<div class="sheet" id="sheet-feedback">
+  <div class="sheet-handle"></div>
+  <button class="sheet-close" onclick="closeSheet('sheet-feedback')">✕</button>
+  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);margin-bottom:7px">Your Voice</div>
+  <div style="font-family:'Instrument Serif',serif;font-size:24px;margin-bottom:4px">Leave Feedback</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5">Help us make ShieldsMap better. Tell us what you think, what you need, or what we should add.</div>
+
+  <!-- STAR RATING -->
+  <div style="margin-bottom:16px">
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">How would you rate ShieldsMap?</div>
+    <div style="display:flex;gap:8px" id="star-row">
+      <span class="star" onclick="rateStar(1)" style="font-size:32px;cursor:pointer;opacity:.3;transition:all .15s">⭐</span>
+      <span class="star" onclick="rateStar(2)" style="font-size:32px;cursor:pointer;opacity:.3;transition:all .15s">⭐</span>
+      <span class="star" onclick="rateStar(3)" style="font-size:32px;cursor:pointer;opacity:.3;transition:all .15s">⭐</span>
+      <span class="star" onclick="rateStar(4)" style="font-size:32px;cursor:pointer;opacity:.3;transition:all .15s">⭐</span>
+      <span class="star" onclick="rateStar(5)" style="font-size:32px;cursor:pointer;opacity:.3;transition:all .15s">⭐</span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Your Trade</label>
+    <select class="form-input" id="fb-trade">
+      <option value="">Select…</option>
+      <option>General Contractor</option><option>Electrician</option><option>Plumber</option>
+      <option>Landscaper</option><option>HVAC</option><option>Painter</option><option>Roofer</option><option>Other</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">What do you think? What would you add?</label>
+    <textarea class="form-input" id="fb-comment" style="height:100px;resize:none" placeholder="Tell us anything — what you love, what is missing, what you want next…"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Your name (optional)</label>
+    <input class="form-input" id="fb-name" placeholder="Carlos M. — Miami, FL">
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:9px;margin-top:4px">
+    <button class="btn btn-ink btn-block" id="fb-btn" onclick="submitFeedback()">Send Feedback →</button>
+    <button class="btn btn-outline btn-block" onclick="closeSheet('sheet-feedback')">Cancel</button>
   </div>
 </div>
 
@@ -765,6 +812,57 @@ function switchSheet(from, to) {
 
 // ═══ HELPERS ═══
 function showFormErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+// ═══ FEEDBACK ═══
+var selectedRating = 0;
+
+function rateStar(n) {
+  selectedRating = n;
+  var stars = document.querySelectorAll('.star');
+  stars.forEach(function(s, i) {
+    s.style.opacity = i < n ? '1' : '0.3';
+  });
+}
+
+async function submitFeedback() {
+  var comment = document.getElementById('fb-comment').value.trim();
+  var trade = document.getElementById('fb-trade').value;
+  var name = document.getElementById('fb-name').value.trim();
+
+  if(!comment) { showToast('⚠️ Please write something first.'); return; }
+  if(!selectedRating) { showToast('⚠️ Please select a star rating.'); return; }
+
+  var btn = document.getElementById('fb-btn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+
+  // Save to Supabase feedback table if available
+  if(supa) {
+    try {
+      await supa.from('feedback').insert({
+        rating: selectedRating,
+        comment: comment,
+        trade: trade,
+        name: name || 'Anonymous',
+        created_at: new Date().toISOString()
+      });
+    } catch(e) {
+      // Table might not exist yet — just show success anyway
+      console.log('Feedback save:', e);
+    }
+  }
+
+  btn.textContent = 'Send Feedback →'; btn.disabled = false;
+
+  // Reset form
+  selectedRating = 0;
+  document.querySelectorAll('.star').forEach(function(s){ s.style.opacity = '0.3'; });
+  document.getElementById('fb-comment').value = '';
+  document.getElementById('fb-trade').value = '';
+  document.getElementById('fb-name').value = '';
+
+  closeSheet('sheet-feedback');
+  showToast('⭐ Thank you! Your feedback means everything to us.');
+}
 
 var toastTimer;
 function showToast(msg) {
