@@ -18,18 +18,18 @@
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);overflow:hidden}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:54px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:64px;background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:10px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
 .nav-logo{display:flex;align-items:center;gap:8px;flex:1}
-.nav-icon{width:28px;height:28px;background:var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px}
-.nav-title{font-family:'Instrument Serif',serif;font-size:18px;color:var(--ink)}
+.nav-icon{width:36px;height:36px;background:var(--ink);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.nav-title{font-family:'Instrument Serif',serif;font-size:24px;color:var(--ink)}
 .nav-title em{font-style:italic;color:var(--danger)}
 .nav-right{display:flex;gap:8px}
 
 /* MAP */
-#map{position:fixed;top:54px;left:0;right:0;bottom:72px;z-index:1}
+#map{position:fixed;top:64px;left:0;right:0;bottom:90px;z-index:1}
 
 /* LEGEND */
-.legend{position:fixed;top:66px;left:12px;z-index:500;background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:10px;padding:10px 13px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.legend{position:fixed;top:76px;left:12px;z-index:500;background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:10px;padding:10px 13px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .leg-row{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;padding:2px 0}
 .ldot{width:9px;height:9px;border-radius:50%}
 .ldot.r{background:var(--danger)}
@@ -37,16 +37,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 .ldot.g{background:var(--safe)}
 
 /* BOTTOM BAR */
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:1000;height:72px;background:rgba(255,255,255,.97);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:1000;height:90px;background:rgba(255,255,255,.97);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:12px;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
 .bottom-stats{display:flex;gap:12px;flex:1}
-.bstat{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
-.bstat-dot{width:8px;height:8px;border-radius:50%}
+.bstat{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700}
+.bstat-dot{width:10px;height:10px;border-radius:50%}
 .bstat-dot.r{background:var(--danger)}
 .bstat-dot.y{background:var(--warn)}
 .bstat-dot.g{background:var(--safe)}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:8px;padding:9px 16px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:10px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .btn-ink{background:var(--ink);color:#fff}
 .btn-ink:active{opacity:.8}
 .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink)}
@@ -55,7 +55,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 .btn-safe{background:var(--safe);color:#fff}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-block{width:100%}
-.btn-sm{padding:7px 13px;font-size:12px}
+.btn-sm{padding:9px 16px;font-size:13px}
 
 /* SHEET */
 .sheet-bg{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.3);display:none;backdrop-filter:blur(4px)}
@@ -104,11 +104,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 .tier-dot.premium{background:var(--gold)}
 
 /* ABOUT BUTTON */
-.about-btn{position:fixed;bottom:82px;right:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
-.feedback-btn{position:fixed;bottom:82px;left:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
+.about-btn{position:fixed;bottom:100px;right:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
+.feedback-btn{position:fixed;bottom:100px;left:12px;z-index:500;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:'DM Sans',sans-serif}
 
 /* REPORT BTN */
-.report-btn{position:fixed;bottom:82px;left:12px;z-index:500}
+.report-btn{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:500}
 
 /* MAP PIN STYLES */
 .mpin{width:32px;height:32px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -118,10 +118,22 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 .pbadge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--ink);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff;padding:0 2px}
 
 /* TOAST */
-.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:700;z-index:9999;transition:transform .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:700;z-index:9999;transition:transform .3s;pointer-events:none;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
 .leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;flex:1}
+.fbar-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.fbar-btn.active-r{background:var(--danger);border-color:var(--danger);color:#fff}
+.fbar-btn.active-y{background:var(--warn);border-color:var(--warn);color:#fff}
+.fbar-btn.active-g{background:var(--safe);border-color:var(--safe);color:#fff}
+.fbar-btn .fb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.fbar-btn .fb-dot.r{background:var(--danger)}
+.fbar-btn .fb-dot.y{background:var(--warn)}
+.fbar-btn .fb-dot.g{background:var(--safe)}
+.fbar-btn.active-r .fb-dot,.fbar-btn.active-y .fb-dot,.fbar-btn.active-g .fb-dot{background:rgba(255,255,255,.7)}
 </style>
 </head>
 <body>
@@ -159,10 +171,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--white);c
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
-  <div class="bottom-stats">
-    <div class="bstat"><div class="bstat-dot r"></div><span id="bs-r">0</span></div>
-    <div class="bstat"><div class="bstat-dot y"></div><span id="bs-y">0</span></div>
-    <div class="bstat"><div class="bstat-dot g"></div><span id="bs-g">0</span></div>
+  <div class="filter-bar">
+    <button class="fbar-btn" id="fb-r" onclick="filterMap('red')">
+      <div class="fb-dot r"></div>
+      <span id="bs-r">0</span>
+    </button>
+    <button class="fbar-btn" id="fb-y" onclick="filterMap('yellow')">
+      <div class="fb-dot y"></div>
+      <span id="bs-y">0</span>
+    </button>
+    <button class="fbar-btn" id="fb-g" onclick="filterMap('green')">
+      <div class="fb-dot g"></div>
+      <span id="bs-g">0</span>
+    </button>
   </div>
   <div id="bottomAction">
     <button class="btn btn-ink btn-sm" onclick="openSheet('sheet-signup')">🛡️ Join Free</button>
@@ -536,13 +557,72 @@ function renderMap() {
   });
 }
 
+var activeFilter = null;
+
 function updateStats() {
   var r = allReports.filter(function(x){return x.status==='red'}).length;
   var y = allReports.filter(function(x){return x.status==='yellow'}).length;
   var g = allReports.filter(function(x){return x.status==='green'}).length;
-  document.getElementById('bs-r').textContent = r;
-  document.getElementById('bs-y').textContent = y;
-  document.getElementById('bs-g').textContent = g;
+  document.getElementById('bs-r').textContent = r + ' Danger';
+  document.getElementById('bs-y').textContent = y + ' Caution';
+  document.getElementById('bs-g').textContent = g + ' Safe';
+}
+
+function filterMap(status) {
+  // Toggle — tap same button to reset
+  if(activeFilter === status) {
+    activeFilter = null;
+    // Reset all buttons
+    document.getElementById('fb-r').className = 'fbar-btn';
+    document.getElementById('fb-y').className = 'fbar-btn';
+    document.getElementById('fb-g').className = 'fbar-btn';
+    // Restore all circles to normal opacity
+    applyFilterToMap(null);
+    return;
+  }
+
+  activeFilter = status;
+
+  // Update button styles
+  document.getElementById('fb-r').className = 'fbar-btn' + (status==='red' ? ' active-r' : '');
+  document.getElementById('fb-y').className = 'fbar-btn' + (status==='yellow' ? ' active-y' : '');
+  document.getElementById('fb-g').className = 'fbar-btn' + (status==='green' ? ' active-g' : '');
+
+  applyFilterToMap(status);
+}
+
+function applyFilterToMap(status) {
+  if(!leafMap) return;
+
+  // Go through all map layers
+  leafMap.eachLayer(function(layer) {
+    // Only affect circles (not tile layer)
+    if(layer instanceof L.Circle || layer instanceof L.CircleMarker) {
+      var layerColor = layer.options.fillColor;
+      var isRed = layerColor === '#dc2626';
+      var isYellow = layerColor === '#d97706';
+      var isGreen = layerColor === '#16a34a';
+
+      if(!status) {
+        // No filter — restore all
+        layer.setStyle({fillOpacity: layer._origOpacity || layer.options.fillOpacity, opacity: layer._origStroke || layer.options.opacity || 1});
+      } else {
+        var matches = (status==='red' && isRed) ||
+                      (status==='yellow' && isYellow) ||
+                      (status==='green' && isGreen);
+
+        if(matches) {
+          // Highlighted — full opacity + pulse effect
+          if(!layer._origOpacity) layer._origOpacity = layer.options.fillOpacity;
+          layer.setStyle({fillOpacity: Math.min((layer._origOpacity || 0.2) * 2.5, 0.9), opacity: 1});
+        } else {
+          // Faded out
+          if(!layer._origOpacity) layer._origOpacity = layer.options.fillOpacity;
+          layer.setStyle({fillOpacity: 0.02, opacity: 0.1});
+        }
+      }
+    }
+  });
 }
 
 // ═══ PIN SHEET ═══
